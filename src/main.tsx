@@ -1,62 +1,77 @@
 import {
   StrictMode,
   useEffect,
+  useLayoutEffect,
+  useRef,
   useState,
   type FormEvent,
   type ReactNode
 } from 'react';
+import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
-  articles,
-  contributions,
-  education,
-  profile,
-  projects,
-  skillGroups,
-  works,
+  siteContent,
+  technologyGroups,
+  type Locale,
   type Project,
   type Work
 } from './content';
 import './styles.css';
 
-type NavKey = 'home' | 'about' | 'projects' | 'open-source' | 'works' | 'articles' | 'contact' | 'resume';
+type NavKey = 'home' | 'about' | 'projects' | 'open-source' | 'works' | 'articles' | 'contact';
 
-const navItems: { key: NavKey; label: string; path: string }[] = [
-  { key: 'home', label: 'Home', path: '/' },
-  { key: 'about', label: 'Sobre mim', path: '/about' },
-  { key: 'projects', label: 'Projetos', path: '/projects' },
-  { key: 'open-source', label: 'Open Source', path: '/open-source' },
-  { key: 'works', label: 'Experiência', path: '/works' },
-  { key: 'articles', label: 'Artigos', path: '/articles' },
-  { key: 'contact', label: 'Contato', path: '/contact' },
-  { key: 'resume', label: 'Currículo', path: '/resume' }
+const navItems: { key: NavKey; path: string }[] = [
+  { key: 'home', path: '/' },
+  { key: 'about', path: '/about' },
+  { key: 'projects', path: '/projects' },
+  { key: 'open-source', path: '/open-source' },
+  { key: 'works', path: '/works' },
+  { key: 'articles', path: '/articles' },
+  { key: 'contact', path: '/contact' }
 ];
 
-const titles: Record<NavKey, string> = {
-  home: 'Bruno Da Cunha Felipe — Desenvolvedor .NET, PHP & Cybersecurity',
-  about: 'Sobre mim — Bruno Da Cunha Felipe',
-  projects: 'Projetos — Bruno Da Cunha Felipe',
-  'open-source': 'Open Source — Bruno Da Cunha Felipe',
-  works: 'Experiência — Bruno Da Cunha Felipe',
-  articles: 'Artigos — Bruno Da Cunha Felipe',
-  contact: 'Contato — Bruno Da Cunha Felipe',
-  resume: 'Currículo — Bruno Da Cunha Felipe'
+const navLabelKeys: Record<NavKey, keyof (typeof siteContent)['en']['ui']['nav']> = {
+  home: 'home',
+  about: 'about',
+  projects: 'projects',
+  'open-source': 'openSource',
+  works: 'works',
+  articles: 'articles',
+  contact: 'contact'
 };
+
+const preferredLocaleKey = 'brunofelipe.dev:preferred-locale';
 
 function cleanPath(value: string) {
   return value.replace(/\/+$/, '') || '/';
 }
 
-function navKeyFromPath(pathname: string): NavKey {
-  const path = cleanPath(pathname);
-  if (path.startsWith('/projects')) return 'projects';
-  if (path.startsWith('/works')) return 'works';
-  if (path.startsWith('/articles')) return 'articles';
-  return navItems.find((item) => item.path === path)?.key ?? 'home';
+function localeFromPath(pathname: string): Locale {
+  return pathname === '/pt-br' || pathname.startsWith('/pt-br/') ? 'pt-BR' : 'en';
+}
+
+function routeFromPath(pathname: string) {
+  if (pathname === '/pt-br') return '/';
+  return cleanPath(pathname.replace(/^\/pt-br/, '') || '/');
+}
+
+function localizedPath(locale: Locale, route: string) {
+  const normalized = cleanPath(route);
+  if (locale === 'pt-BR') return normalized === '/' ? '/pt-br' : `/pt-br${normalized}`;
+  return normalized;
+}
+
+function navKeyFromRoute(route: string): NavKey {
+  if (route.startsWith('/projects')) return 'projects';
+  if (route.startsWith('/works')) return 'works';
+  if (route.startsWith('/articles')) return 'articles';
+  return navItems.find((item) => item.path === route)?.key ?? 'home';
 }
 
 function useRouter() {
   const [pathname, setPathname] = useState(() => cleanPath(window.location.pathname));
+  const locale = localeFromPath(pathname);
+  const route = routeFromPath(pathname);
 
   useEffect(() => {
     const onPopState = () => setPathname(cleanPath(window.location.pathname));
@@ -65,9 +80,27 @@ function useRouter() {
   }, []);
 
   useEffect(() => {
-    document.title = titles[navKeyFromPath(pathname)];
+    if (window.location.pathname !== '/') return;
+    const stored = window.localStorage.getItem(preferredLocaleKey);
+    const detected: Locale = stored === 'pt-BR' || stored === 'en'
+      ? stored
+      : navigator.languages.some((language) => language.toLowerCase().startsWith('pt'))
+        ? 'pt-BR'
+        : 'en';
+    window.localStorage.setItem(preferredLocaleKey, detected);
+    if (detected === 'pt-BR') {
+      window.history.replaceState({}, '', '/pt-br');
+      setPathname('/pt-br');
+    }
+  }, []);
+
+  useEffect(() => {
+    const content = siteContent[locale];
+    const key = navKeyFromRoute(route);
+    document.documentElement.lang = locale;
+    document.title = `${content.ui.nav[navLabelKeys[key]]} — ${content.profile.name}`;
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [pathname]);
+  }, [locale, route]);
 
   function navigate(path: string) {
     if (/^(https?:|mailto:)/.test(path)) {
@@ -78,7 +111,12 @@ function useRouter() {
     setPathname(cleanPath(path));
   }
 
-  return { pathname, navigate };
+  function changeLocale(nextLocale: Locale) {
+    window.localStorage.setItem(preferredLocaleKey, nextLocale);
+    navigate(localizedPath(nextLocale, route));
+  }
+
+  return { locale, route, navigate, changeLocale };
 }
 
 function Arrow() {
@@ -114,32 +152,176 @@ function RouteLink({
   );
 }
 
-function Header({
-  active,
-  navigate
+function LanguageSwitcher({
+  locale,
+  label,
+  onChange
 }: {
-  active: NavKey;
-  navigate: (path: string) => void;
+  locale: Locale;
+  label: string;
+  onChange: (locale: Locale) => void;
 }) {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const nextLocale: Locale = locale === 'en' ? 'pt-BR' : 'en';
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 70);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const close = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
   }, []);
 
   return (
-    <header className={scrolled ? 'site-header is-scrolled' : 'site-header'}>
+    <div className="language-switcher" ref={ref}>
+      <button
+        type="button"
+        aria-label={label}
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span aria-hidden="true">{locale === 'en' ? '🇺🇸' : '🇧🇷'}</span>
+        <span>{locale === 'en' ? 'EN' : 'PT'}</span>
+        <i aria-hidden="true">⌄</i>
+      </button>
+      {open ? (
+        <div className="language-menu" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onChange(nextLocale);
+              setOpen(false);
+            }}
+          >
+            <span aria-hidden="true">{nextLocale === 'en' ? '🇺🇸' : '🇧🇷'}</span>
+            {nextLocale === 'en' ? 'English' : 'Português'}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const resumeFiles = [
+  {
+    language: 'EN',
+    label: 'English',
+    href: '/resume/bruno-da-cunha-felipe-resume-en.pdf'
+  },
+  {
+    language: 'PT',
+    label: 'Português',
+    href: '/resume/bruno-da-cunha-felipe-curriculo-pt-br.pdf'
+  }
+];
+
+function ResumeMenu({ label, compact = false }: { label: string; compact?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ right: 0, top: 0 });
+
+  useEffect(() => {
+    const close = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!wrapperRef.current?.contains(target) && !dropdownRef.current?.contains(target)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', escape);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const bounds = buttonRef.current?.getBoundingClientRect();
+      if (bounds) setPosition({ right: window.innerWidth - bounds.right, top: bounds.bottom + 10 });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open]);
+
+  return (
+    <div className="resume-menu-wrap" ref={wrapperRef}>
+      <button
+        className={compact ? 'resume-trigger compact' : 'resume-trigger'}
+        ref={buttonRef}
+        type="button"
+        aria-label={label}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span aria-hidden="true">↓</span>
+        {compact ? 'CV' : label}
+      </button>
+      {open ? createPortal(
+        <div
+          className="resume-dropdown"
+          ref={dropdownRef}
+          role="menu"
+          style={position}
+        >
+          {resumeFiles.map((file) => (
+            <a
+              key={file.language}
+              href={file.href}
+              download
+              role="menuitem"
+              onClick={() => setOpen(false)}
+            >
+              <span>{file.label}</span>
+              <small>{file.language} PDF</small>
+            </a>
+          ))}
+        </div>,
+        document.body
+      ) : null}
+    </div>
+  );
+}
+
+function Header({
+  active,
+  locale,
+  navigate,
+  changeLocale
+}: {
+  active: NavKey;
+  locale: Locale;
+  navigate: (path: string) => void;
+  changeLocale: (locale: Locale) => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const content = siteContent[locale];
+  const { profile, ui } = content;
+
+  return (
+    <header className="site-header">
+      <div className="header-tools">
+        <LanguageSwitcher locale={locale} label={ui.labels.language} onChange={changeLocale} />
+      </div>
+
       <div className="header-profile">
-        <RouteLink href="/" navigate={navigate} className="avatar" >
-          <span className="avatar-grid" aria-hidden="true" />
-          <strong>{profile.initials}</strong>
-          <span className="avatar-status" aria-label="Disponível" />
+        <RouteLink href={localizedPath(locale, '/')} navigate={navigate} className="avatar">
+          <img src="/images/bruno.jpg" alt={profile.name} width="150" height="150" />
+          <span className="avatar-status" aria-label={ui.labels.available} />
         </RouteLink>
-        <RouteLink href="/" navigate={navigate} className="profile-name">
+        <RouteLink href={localizedPath(locale, '/')} navigate={navigate} className="profile-name">
           {profile.name}
         </RouteLink>
       </div>
@@ -148,40 +330,67 @@ function Header({
         className="mobile-menu"
         type="button"
         aria-expanded={menuOpen}
-        aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
         onClick={() => setMenuOpen((value) => !value)}
       >
         <span />
         <span />
       </button>
 
-      <nav className={menuOpen ? 'main-nav is-open' : 'main-nav'} aria-label="Navegação principal">
+      <nav className={menuOpen ? 'main-nav is-open' : 'main-nav'} aria-label={ui.labels.mainNavigation}>
         {navItems.map((item) => (
           <RouteLink
             key={item.key}
-            href={item.path}
+            href={localizedPath(locale, item.path)}
             navigate={(path) => {
               navigate(path);
               setMenuOpen(false);
             }}
             className={active === item.key ? 'nav-link active' : 'nav-link'}
           >
-            {item.label}
+            {ui.nav[navLabelKeys[item.key]]}
           </RouteLink>
         ))}
+        <ResumeMenu label={ui.labels.downloadResume} />
       </nav>
     </header>
   );
 }
 
-function Footer() {
+function SiteEffects() {
+  useEffect(() => {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    let frame = 0;
+    const move = (event: PointerEvent) => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--pointer-x', `${event.clientX}px`);
+        document.documentElement.style.setProperty('--pointer-y', `${event.clientY}px`);
+        document.documentElement.style.setProperty('--pointer-opacity', '1');
+      });
+    };
+    const leave = () => document.documentElement.style.setProperty('--pointer-opacity', '0');
+    window.addEventListener('pointermove', move, { passive: true });
+    document.documentElement.addEventListener('mouseleave', leave);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('pointermove', move);
+      document.documentElement.removeEventListener('mouseleave', leave);
+    };
+  }, []);
+
+  return <div className="pointer-effect" aria-hidden="true" />;
+}
+
+function Footer({ locale }: { locale: Locale }) {
+  const { profile, ui } = siteContent[locale];
   return (
     <footer className="site-footer">
       <div>
         <p>© {new Date().getFullYear()} {profile.name}.</p>
-        <span>Construído com React, TypeScript e curiosidade.</span>
+        <span>{ui.footer}</span>
       </div>
-      <nav aria-label="Links externos">
+      <nav aria-label={ui.labels.externalLinks}>
         {profile.links.map((link) => (
           <a
             key={link.label}
@@ -230,42 +439,50 @@ function PageIntro({ title, description }: { title: string; description: string 
   );
 }
 
-function TechBanner() {
-  const technologies = ['.NET', 'C#', 'PHP', 'Laravel', 'React', 'PostgreSQL', 'Docker', 'AWS'];
+function TechBanner({ locale }: { locale: Locale }) {
+  const { banner } = siteContent[locale].ui;
   return (
-    <div className="tech-banner" role="img" aria-label="Tecnologias e áreas de atuação de Bruno">
+    <section className="tech-banner" aria-label={banner.description}>
+      <img className="banner-art" src="/images/hero-workspace.png" alt="" aria-hidden="true" />
+      <div className="banner-shade" aria-hidden="true" />
       <div className="banner-copy">
-        <p><span className="prompt">$</span> whoami</p>
-        <strong>software_developer</strong>
-        <span>backend · web · cloud</span>
+        <p>{banner.eyebrow}</p>
+        <h2>{banner.title}</h2>
+        <span>{banner.description}</span>
       </div>
-      <div className="orbit-panel" aria-hidden="true">
-        <span className="orbit orbit-one" />
-        <span className="orbit orbit-two" />
-        <span className="orbit-cross orbit-cross-x" />
-        <span className="orbit-cross orbit-cross-y" />
-        <strong>BF</strong>
+      <div className="cloud-providers" aria-label="Cloud providers">
+        <div><img src="/images/brands/aws.png" alt="AWS" /></div>
+        <div><img src="/images/brands/digitalocean.svg" alt="DigitalOcean" /><span>DigitalOcean</span></div>
+        <div><img src="/images/brands/cloudflare.svg" alt="Cloudflare" /><span>Cloudflare</span></div>
       </div>
-      <div className="banner-stack">
-        {technologies.map((tech, index) => (
-          <span key={tech} style={{ '--order': index } as React.CSSProperties}>{tech}</span>
+      <div className="technology-matrix">
+        {technologyGroups.map((group) => (
+          <div className={`technology-group ${group.key}`} key={group.key}>
+            <strong>{group.label}</strong>
+            <div>
+              {group.items.map((item) => <span key={item}>{item}</span>)}
+            </div>
+          </div>
         ))}
       </div>
-      <div className="banner-modes">
-        <span><i /> BUILD</span>
-        <span><i /> SECURE</span>
-        <span><i /> PLAY</span>
-      </div>
-    </div>
+    </section>
   );
 }
 
-function ProjectCard({ project, navigate }: { project: Project; navigate: (path: string) => void }) {
+function ProjectCard({
+  project,
+  navigate,
+  label
+}: {
+  project: Project;
+  navigate: (path: string) => void;
+  label: string;
+}) {
   return (
-    <RouteLink href={`/projects/${project.slug}`} navigate={navigate} className="content-card project-card">
+    <RouteLink href={project.slug} navigate={navigate} className="content-card project-card">
       <div className="project-visual" aria-hidden="true">
         <span className="window-bar"><i /><i /><i /></span>
-        <span className="visual-path">src/{project.slug}</span>
+        <span className="visual-path">src/{project.slug.split('/').pop()}</span>
         <strong>{project.title.slice(0, 2).toUpperCase()}</strong>
         <span className="visual-scan" />
       </div>
@@ -276,31 +493,47 @@ function ProjectCard({ project, navigate }: { project: Project; navigate: (path:
         <div className="tags">
           {project.stack.map((tech) => <span key={tech}>{tech}</span>)}
         </div>
-        <span className="card-link">Ver projeto <Arrow /></span>
+        <span className="card-link">{label} <Arrow /></span>
       </div>
     </RouteLink>
   );
 }
 
-function WorkCard({ work, navigate }: { work: Work; navigate: (path: string) => void }) {
+function WorkCard({
+  work,
+  navigate,
+  label
+}: {
+  work: Work;
+  navigate: (path: string) => void;
+  label: string;
+}) {
   return (
-    <RouteLink href={`/works/${work.slug}`} navigate={navigate} className="content-card work-card">
-      <div className="company-mark" aria-hidden="true">{work.company.split(' ').map((word) => word[0]).slice(0, 2).join('')}</div>
+    <RouteLink href={work.slug} navigate={navigate} className="content-card work-card">
+      <div className="company-mark" aria-hidden="true">
+        {work.company.split(' ').map((word) => word[0]).slice(0, 2).join('')}
+      </div>
       <span className="card-kicker">{work.dateRange}</span>
       <h3>{work.company}</h3>
       <strong>{work.title}</strong>
       <p>{work.summary}</p>
-      <span className="card-link">Ver experiência <Arrow /></span>
+      <span className="card-link">{label} <Arrow /></span>
     </RouteLink>
   );
 }
 
-function ContributionCard({ item }: { item: (typeof contributions)[number] }) {
+function ContributionCard({
+  item,
+  publicLabel
+}: {
+  item: (typeof siteContent)['en']['contributions'][number];
+  publicLabel: string;
+}) {
   return (
     <article className="content-card contribution-card">
       <div className="repo-line">
         <span className="repo-icon" aria-hidden="true">&lt;/&gt;</span>
-        <span>PUBLIC / LAB</span>
+        <span>{publicLabel}</span>
       </div>
       <h3>{item.title}</h3>
       <p>{item.description}</p>
@@ -309,7 +542,13 @@ function ContributionCard({ item }: { item: (typeof contributions)[number] }) {
   );
 }
 
-function ArticleCard({ article }: { article: (typeof articles)[number] }) {
+function ArticleCard({
+  article,
+  comingSoon
+}: {
+  article: (typeof siteContent)['en']['articles'][number];
+  comingSoon: string;
+}) {
   return (
     <article className="content-card article-card">
       <div className="article-visual" aria-hidden="true">
@@ -321,84 +560,119 @@ function ArticleCard({ article }: { article: (typeof articles)[number] }) {
         <div className="article-meta"><span>{article.date}</span><span>·</span><span>{article.readingTime}</span></div>
         <h3>{article.title}</h3>
         <p>{article.description}</p>
-        <span className="card-link muted">Publicação em breve</span>
+        <span className="card-link muted">{comingSoon}</span>
       </div>
     </article>
   );
 }
 
-function Home({ navigate }: { navigate: (path: string) => void }) {
+function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) => void }) {
+  const { profile, projects, works, contributions, articles, ui } = siteContent[locale];
   return (
     <>
       <section className="home-intro">
-        <TechBanner />
+        <TechBanner locale={locale} />
         <p className="terminal-label">~/profile <span className="cursor">_</span></p>
         <h1>{profile.headline}</h1>
         <div className="profile-copy">
           {profile.about.slice(0, 2).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
         </div>
-        <p className="location-line">Trabalhando a partir de {profile.location}.</p>
+        <p className="location-line">{ui.home.locationPrefix} {profile.location}.</p>
         <p className="social-line">
-          Encontre-me no{' '}
+          {ui.home.findMe}{' '}
           <a href={profile.links[0].href} target="_blank" rel="noreferrer">{profile.links[0].label}</a>
-          {' '}ou no{' '}
+          {' '}{ui.home.or}{' '}
           <a href={profile.links[1].href} target="_blank" rel="noreferrer">{profile.links[1].label}</a>.
         </p>
       </section>
 
       <section className="status-board">
-        <div><span>FOCO ATUAL</span><strong>.NET · PHP · APIs</strong></div>
-        <div><span>ESTUDANDO</span><strong>Cybersecurity · Pentest</strong></div>
-        <div><span>SIDE QUEST</span><strong>Game Development</strong></div>
-        <div><span>STATUS</span><strong className="online"><i /> Disponível</strong></div>
+        <div><span>{ui.labels.currentFocus}</span><strong>.NET · PHP · APIs</strong></div>
+        <div><span>{ui.labels.studying}</span><strong>Cybersecurity · Pentest</strong></div>
+        <div><span>{ui.labels.sideQuest}</span><strong>Game Development</strong></div>
+        <div><span>{ui.labels.status}</span><strong className="online"><i /> {profile.availability}</strong></div>
       </section>
 
       <section className="home-section">
-        <SectionTitle title="Projetos em destaque" action="Ver todos os projetos" actionPath="/projects" navigate={navigate} />
+        <SectionTitle
+          title={ui.labels.featuredProjects}
+          action={ui.labels.viewProjects}
+          actionPath={localizedPath(locale, '/projects')}
+          navigate={navigate}
+        />
         <div className="card-grid three">
           {projects.filter((item) => item.featured).map((project) => (
-            <ProjectCard key={project.slug} project={project} navigate={navigate} />
+            <ProjectCard
+              key={project.slug}
+              project={{ ...project, slug: localizedPath(locale, `/projects/${project.slug}`) }}
+              navigate={navigate}
+              label={ui.labels.viewProject}
+            />
           ))}
         </div>
       </section>
 
       <section className="home-section">
-        <SectionTitle title="Open Source & Labs" action="Ver contribuições" actionPath="/open-source" navigate={navigate} />
+        <SectionTitle
+          title={ui.labels.openSourceLabs}
+          action={ui.labels.viewContributions}
+          actionPath={localizedPath(locale, '/open-source')}
+          navigate={navigate}
+        />
         <div className="card-grid two">
-          {contributions.slice(0, 2).map((item) => <ContributionCard key={item.title} item={item} />)}
+          {contributions.slice(0, 2).map((item) => (
+            <ContributionCard key={item.title} item={item} publicLabel={ui.labels.publicLab} />
+          ))}
         </div>
       </section>
 
       <section className="home-section">
-        <SectionTitle title="Experiência" action="Ver trajetória completa" actionPath="/works" navigate={navigate} />
+        <SectionTitle
+          title={ui.labels.experience}
+          action={ui.labels.viewExperience}
+          actionPath={localizedPath(locale, '/works')}
+          navigate={navigate}
+        />
         <div className="card-grid three">
-          {works.slice(0, 3).map((work) => <WorkCard key={work.slug} work={work} navigate={navigate} />)}
+          {works.slice(0, 3).map((work) => (
+            <WorkCard
+              key={work.slug}
+              work={{ ...work, slug: localizedPath(locale, `/works/${work.slug}`) }}
+              navigate={navigate}
+              label={ui.labels.viewWork}
+            />
+          ))}
         </div>
       </section>
 
       <section className="home-section">
-        <SectionTitle title="Artigos & notas" action="Ver todos os artigos" actionPath="/articles" navigate={navigate} />
+        <SectionTitle
+          title={ui.labels.articlesNotes}
+          action={ui.labels.viewArticles}
+          actionPath={localizedPath(locale, '/articles')}
+          navigate={navigate}
+        />
         <div className="card-grid three">
-          {articles.map((article) => <ArticleCard key={article.slug} article={article} />)}
+          {articles.map((article) => (
+            <ArticleCard key={article.slug} article={article} comingSoon={ui.labels.comingSoon} />
+          ))}
         </div>
       </section>
     </>
   );
 }
 
-function About() {
+function About({ locale }: { locale: Locale }) {
+  const { profile, skillGroups, education, ui } = siteContent[locale];
   return (
     <>
-      <PageIntro
-        title="Sobre mim"
-        description="Da operação ao desenvolvimento: uma trajetória construída resolvendo problemas reais com software, dados e infraestrutura."
-      />
+      <PageIntro title={ui.pages.about.title} description={ui.pages.about.description} />
       <section className="prose-block">
         {profile.about.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
       </section>
 
       <section className="home-section">
-        <SectionTitle title="Competências" />
+        <SectionTitle title={ui.labels.skills} />
         <div className="card-grid two skills-grid">
           {skillGroups.map((group) => (
             <article className="content-card skill-card" key={group.group}>
@@ -410,7 +684,7 @@ function About() {
       </section>
 
       <section className="home-section">
-        <SectionTitle title="Formação acadêmica" />
+        <SectionTitle title={ui.labels.education} />
         <div className="education-list">
           {education.map((item) => (
             <article key={item.institution}>
@@ -428,127 +702,134 @@ function About() {
   );
 }
 
-function Projects({ navigate }: { navigate: (path: string) => void }) {
+function Projects({ locale, navigate }: { locale: Locale; navigate: (path: string) => void }) {
+  const { projects, ui } = siteContent[locale];
   return (
     <>
-      <PageIntro
-        title="Projetos"
-        description="Soluções que combinam desenvolvimento web, APIs, dados, modernização e experimentação."
-      />
+      <PageIntro title={ui.pages.projects.title} description={ui.pages.projects.description} />
       <section className="home-section page-list">
         <div className="card-grid three">
-          {projects.map((project) => <ProjectCard key={project.slug} project={project} navigate={navigate} />)}
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.slug}
+              project={{ ...project, slug: localizedPath(locale, `/projects/${project.slug}`) }}
+              navigate={navigate}
+              label={ui.labels.viewProject}
+            />
+          ))}
         </div>
       </section>
     </>
   );
 }
 
-function OpenSource() {
+function OpenSource({ locale }: { locale: Locale }) {
+  const { contributions, ui } = siteContent[locale];
   return (
     <>
-      <PageIntro
-        title="Open Source"
-        description="Projetos, laboratórios e anotações publicados para documentar aprendizados e contribuir com a comunidade."
-      />
+      <PageIntro title={ui.pages.openSource.title} description={ui.pages.openSource.description} />
       <section className="home-section page-list">
         <div className="card-grid two">
-          {contributions.map((item) => <ContributionCard key={item.title} item={item} />)}
+          {contributions.map((item) => (
+            <ContributionCard key={item.title} item={item} publicLabel={ui.labels.publicLab} />
+          ))}
         </div>
       </section>
     </>
   );
 }
 
-function Works({ navigate }: { navigate: (path: string) => void }) {
+function Works({ locale, navigate }: { locale: Locale; navigate: (path: string) => void }) {
+  const { works, ui } = siteContent[locale];
   return (
     <>
-      <PageIntro
-        title="Experiência"
-        description="Mais de uma década entre suporte, bancos de dados, implantação e desenvolvimento de software."
-      />
+      <PageIntro title={ui.pages.works.title} description={ui.pages.works.description} />
       <section className="home-section page-list">
-        <SectionTitle title="Trajetória profissional" />
+        <SectionTitle title={ui.labels.trajectory} />
         <div className="card-grid two">
-          {works.map((work) => <WorkCard key={work.slug} work={work} navigate={navigate} />)}
+          {works.map((work) => (
+            <WorkCard
+              key={work.slug}
+              work={{ ...work, slug: localizedPath(locale, `/works/${work.slug}`) }}
+              navigate={navigate}
+              label={ui.labels.viewWork}
+            />
+          ))}
         </div>
       </section>
     </>
   );
 }
 
-function Articles() {
+function Articles({ locale }: { locale: Locale }) {
+  const { articles, ui } = siteContent[locale];
   return (
     <>
-      <PageIntro
-        title="Artigos"
-        description="Notas sobre .NET, PHP, bancos de dados, segurança de aplicações e aprendizados de quem conhece o software também pela operação."
-      />
+      <PageIntro title={ui.pages.articles.title} description={ui.pages.articles.description} />
       <section className="home-section page-list">
         <div className="card-grid two">
-          {articles.map((article) => <ArticleCard key={article.slug} article={article} />)}
+          {articles.map((article) => (
+            <ArticleCard key={article.slug} article={article} comingSoon={ui.labels.comingSoon} />
+          ))}
         </div>
       </section>
     </>
   );
 }
 
-function Contact() {
+function Contact({ locale }: { locale: Locale }) {
   const [opened, setOpened] = useState(false);
+  const { profile, ui } = siteContent[locale];
+  const copy = ui.pages.contact;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const subject = encodeURIComponent(`Contato pelo portfólio — ${String(data.get('name') || '')}`);
-    const body = encodeURIComponent(
-      `${String(data.get('message') || '')}\n\nContato: ${String(data.get('email') || '')}`
-    );
+    const subject = encodeURIComponent(`Portfolio contact - ${String(data.get('name') || '')}`);
+    const body = encodeURIComponent(`${String(data.get('message') || '')}\n\nContact: ${String(data.get('email') || '')}`);
     setOpened(true);
     window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`;
   }
 
   return (
     <>
-      <PageIntro
-        title="Contato"
-        description="Tem um projeto, uma integração, um sistema legado ou uma conversa sobre segurança? Envie o contexto inicial."
-      />
+      <PageIntro title={copy.title} description={copy.description} />
       <section className="contact-card">
-        <h2>Vamos conversar</h2>
+        <h2>{copy.formTitle}</h2>
         <form onSubmit={submit}>
           <label>
-            Nome
-            <input name="name" type="text" placeholder="Seu nome" required />
+            {copy.name}
+            <input name="name" type="text" placeholder={copy.namePlaceholder} required />
           </label>
           <label>
-            E-mail
-            <input name="email" type="email" placeholder="voce@empresa.com" required />
+            {copy.email}
+            <input name="email" type="email" placeholder={copy.emailPlaceholder} required />
           </label>
           <label>
-            Mensagem
-            <textarea name="message" rows={6} placeholder="Conte um pouco sobre o desafio." required />
+            {copy.message}
+            <textarea name="message" rows={6} placeholder={copy.messagePlaceholder} required />
           </label>
-          <button className="primary-button" type="submit">Preparar e-mail <Arrow /></button>
-          {opened ? <p className="form-status">Seu aplicativo de e-mail será aberto para concluir o envio.</p> : null}
+          <button className="primary-button" type="submit">{copy.submit} <Arrow /></button>
+          {opened ? <p className="form-status">{copy.opened}</p> : null}
         </form>
       </section>
       <section className="home-section contact-alternatives">
-        <SectionTitle title="Outros canais" />
+        <SectionTitle title={copy.alternatives} />
         <div className="card-grid three">
           <article className="content-card small-card">
             <span className="card-kicker">E-mail</span>
             <a href={`mailto:${profile.email}`}>{profile.email}</a>
-            <p>Envie uma mensagem direta e responderei assim que possível.</p>
+            <p>{copy.emailDescription}</p>
           </article>
           <article className="content-card small-card">
             <span className="card-kicker">LinkedIn</span>
             <a href={profile.links[0].href} target="_blank" rel="noreferrer">brunodcfelipe</a>
-            <p>Perfil profissional, histórico e conexão.</p>
+            <p>{copy.linkedinDescription}</p>
           </article>
           <article className="content-card small-card">
-            <span className="card-kicker">Localização</span>
+            <span className="card-kicker">{locale === 'en' ? 'Location' : 'Localização'}</span>
             <strong>Bauru, SP</strong>
-            <p>Disponível para colaboração remota.</p>
+            <p>{copy.locationDescription}</p>
           </article>
         </div>
       </section>
@@ -556,71 +837,23 @@ function Contact() {
   );
 }
 
-function Resume() {
-  return (
-    <>
-      <PageIntro
-        title="Currículo"
-        description={`${profile.headline} ${profile.location}.`}
-      />
-      <section className="resume-sheet">
-        <div className="resume-actions no-print">
-          <button className="primary-button" type="button" onClick={() => window.print()}>
-            Salvar em PDF / Imprimir
-          </button>
-        </div>
-        <div className="resume-section">
-          <h2>Perfil</h2>
-          <p>{profile.summary}</p>
-        </div>
-        <div className="resume-section">
-          <h2>Experiência</h2>
-          {works.map((work) => (
-            <article className="resume-entry" key={work.slug}>
-              <span>{work.dateRange}</span>
-              <div>
-                <h3>{work.title}</h3>
-                <strong>{work.company} · {work.location}</strong>
-                <p>{work.summary}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="resume-section">
-          <h2>Formação</h2>
-          {education.map((item) => (
-            <article className="resume-entry" key={item.institution}>
-              <span>{item.period}</span>
-              <div>
-                <h3>{item.course}</h3>
-                <strong>{item.institution}</strong>
-                <p>{item.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="resume-section">
-          <h2>Competências</h2>
-          <div className="resume-skills">
-            {skillGroups.map((group) => (
-              <div key={group.group}>
-                <h3>{group.group}</h3>
-                <p>{group.items.join(' · ')}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
-
-function ProjectDetail({ project, navigate }: { project: Project; navigate: (path: string) => void }) {
+function ProjectDetail({
+  project,
+  locale,
+  navigate
+}: {
+  project: Project;
+  locale: Locale;
+  navigate: (path: string) => void;
+}) {
+  const ui = siteContent[locale].ui;
   return (
     <>
       <PageIntro title={project.title} description={project.description} />
       <article className="detail-page">
-        <RouteLink href="/projects" navigate={navigate} className="back-link">← Voltar para projetos</RouteLink>
+        <RouteLink href={localizedPath(locale, '/projects')} navigate={navigate} className="back-link">
+          ← {ui.labels.backProjects}
+        </RouteLink>
         <p className="detail-kicker">{project.category}</p>
         {project.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
         <div className="tags">{project.stack.map((tag) => <span key={tag}>{tag}</span>)}</div>
@@ -629,12 +862,23 @@ function ProjectDetail({ project, navigate }: { project: Project; navigate: (pat
   );
 }
 
-function WorkDetail({ work, navigate }: { work: Work; navigate: (path: string) => void }) {
+function WorkDetail({
+  work,
+  locale,
+  navigate
+}: {
+  work: Work;
+  locale: Locale;
+  navigate: (path: string) => void;
+}) {
+  const ui = siteContent[locale].ui;
   return (
     <>
       <PageIntro title={work.company} description={`${work.title} · ${work.dateRange}`} />
       <article className="detail-page">
-        <RouteLink href="/works" navigate={navigate} className="back-link">← Voltar para experiência</RouteLink>
+        <RouteLink href={localizedPath(locale, '/works')} navigate={navigate} className="back-link">
+          ← {ui.labels.backWorks}
+        </RouteLink>
         <p className="detail-kicker">{work.location}</p>
         <p>{work.summary}</p>
         {work.bullets?.length ? <ul>{work.bullets.map((item) => <li key={item}>{item}</li>)}</ul> : null}
@@ -644,49 +888,66 @@ function WorkDetail({ work, navigate }: { work: Work; navigate: (path: string) =
   );
 }
 
-function NotFound({ navigate }: { navigate: (path: string) => void }) {
+function NotFound({ locale, navigate }: { locale: Locale; navigate: (path: string) => void }) {
+  const ui = siteContent[locale].ui;
   return (
     <section className="not-found">
       <p className="terminal-label">HTTP 404</p>
-      <h1>Página não encontrada.</h1>
-      <button className="primary-button" onClick={() => navigate('/')}>Voltar ao início</button>
+      <h1>{ui.notFound}</h1>
+      <button className="primary-button" onClick={() => navigate(localizedPath(locale, '/'))}>{ui.backHome}</button>
     </section>
   );
 }
 
-function PageRouter({ pathname, navigate }: { pathname: string; navigate: (path: string) => void }) {
-  if (pathname.startsWith('/projects/')) {
-    const project = projects.find((item) => `/projects/${item.slug}` === pathname);
-    return project ? <ProjectDetail project={project} navigate={navigate} /> : <NotFound navigate={navigate} />;
+function PageRouter({
+  locale,
+  route,
+  navigate
+}: {
+  locale: Locale;
+  route: string;
+  navigate: (path: string) => void;
+}) {
+  const content = siteContent[locale];
+  if (route.startsWith('/projects/')) {
+    const slug = route.replace('/projects/', '');
+    const project = content.projects.find((item) => item.slug === slug);
+    return project ? <ProjectDetail project={project} locale={locale} navigate={navigate} /> : <NotFound locale={locale} navigate={navigate} />;
   }
-  if (pathname.startsWith('/works/')) {
-    const work = works.find((item) => `/works/${item.slug}` === pathname);
-    return work ? <WorkDetail work={work} navigate={navigate} /> : <NotFound navigate={navigate} />;
+  if (route.startsWith('/works/')) {
+    const slug = route.replace('/works/', '');
+    const work = content.works.find((item) => item.slug === slug);
+    return work ? <WorkDetail work={work} locale={locale} navigate={navigate} /> : <NotFound locale={locale} navigate={navigate} />;
   }
-  switch (pathname) {
-    case '/': return <Home navigate={navigate} />;
-    case '/about': return <About />;
-    case '/projects': return <Projects navigate={navigate} />;
-    case '/open-source': return <OpenSource />;
-    case '/works': return <Works navigate={navigate} />;
-    case '/articles': return <Articles />;
-    case '/contact': return <Contact />;
-    case '/resume': return <Resume />;
-    default: return <NotFound navigate={navigate} />;
+  switch (route) {
+    case '/': return <Home locale={locale} navigate={navigate} />;
+    case '/about': return <About locale={locale} />;
+    case '/projects': return <Projects locale={locale} navigate={navigate} />;
+    case '/open-source': return <OpenSource locale={locale} />;
+    case '/works': return <Works locale={locale} navigate={navigate} />;
+    case '/articles': return <Articles locale={locale} />;
+    case '/contact': return <Contact locale={locale} />;
+    default: return <NotFound locale={locale} navigate={navigate} />;
   }
 }
 
 function App() {
-  const { pathname, navigate } = useRouter();
+  const { locale, route, navigate, changeLocale } = useRouter();
   return (
     <div className="app">
       <div className="grid-background" aria-hidden="true" />
+      <SiteEffects />
       <div className="site-container">
-        <Header active={navKeyFromPath(pathname)} navigate={navigate} />
+        <Header
+          active={navKeyFromRoute(route)}
+          locale={locale}
+          navigate={navigate}
+          changeLocale={changeLocale}
+        />
         <main>
-          <PageRouter pathname={pathname} navigate={navigate} />
+          <PageRouter locale={locale} route={route} navigate={navigate} />
         </main>
-        <Footer />
+        <Footer locale={locale} />
       </div>
     </div>
   );
