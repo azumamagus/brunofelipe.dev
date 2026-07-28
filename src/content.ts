@@ -749,31 +749,58 @@ export const technologyGroups = [
   {
     key: 'backend',
     label: 'BACKEND',
-    items: ['.NET / C#', 'ASP.NET Core', 'Node.js', 'Laravel', 'Python', 'CodeIgniter']
+    items: [
+      { name: 'C#', icon: 'sharp', color: '#9b4fce' },
+      { name: 'ASP.NET Core', icon: 'dotnet', color: '#7c5cff' },
+      { name: 'Node.js', icon: 'node', color: '#5fa04e' },
+      { name: 'Laravel', icon: 'laravel', color: '#ff2d20' },
+      { name: 'Python', icon: 'python', color: '#ffd343' }
+    ]
   },
   {
     key: 'frontend',
     label: 'FRONTEND (WEB)',
-    items: ['React.js', 'Vue.js', 'Blazor']
+    items: [
+      { name: 'React.js', icon: 'react', color: '#61dafb' },
+      { name: 'Vue.js', icon: 'vue', color: '#42b883' },
+      { name: 'Blazor', icon: 'blazor', color: '#8c3fd1' }
+    ]
   },
   {
     key: 'mobile',
     label: 'MOBILE',
-    items: ['Flutter', '.NET MAUI']
+    items: [
+      { name: 'Flutter', icon: 'flutter', color: '#54c5f8' },
+      { name: '.NET MAUI', icon: 'dotnet', color: '#8b5cf6' }
+    ]
   },
   {
     key: 'devops',
     label: 'DEVOPS & INFRA',
-    items: ['Docker', 'TeamCity', 'GitHub CI/CD', 'GitLab CI/CD']
+    items: [
+      { name: 'Docker', icon: 'docker', color: '#2496ed' },
+      { name: 'TeamCity', icon: 'teamcity', color: '#c4d600' },
+      { name: 'GitHub CI/CD', icon: 'github', color: '#f2f3ed' },
+      { name: 'GitLab CI/CD', icon: 'gitlab', color: '#fc6d26' }
+    ]
   },
   {
     key: 'observability',
     label: 'OBSERVABILITY',
-    items: ['Sentry', 'Monitoring', 'Logging']
+    items: [
+      { name: 'Sentry', icon: 'sentry', color: '#a687ff' },
+      { name: 'Grafana', icon: 'grafana', color: '#f46800' },
+      { name: 'OpenTelemetry', icon: 'opentelemetry', color: '#f5a800' }
+    ]
   },
   {
     key: 'pentest',
     label: 'PENTEST',
-    items: ['Metasploit', 'Kali Linux', 'OWASP']
+    items: [
+      { name: 'Metasploit', icon: 'metasploit', color: '#2596cd' },
+      { name: 'Kali Linux', icon: 'kali', color: '#557c94' },
+      { name: 'OWASP', icon: 'owasp', color: '#f2f3ed' },
+      { name: 'PTES', icon: 'ptes', color: '#dff000' }
+    ]
   }
 ] as const;

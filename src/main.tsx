@@ -4,11 +4,35 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type FormEvent,
   type ReactNode
 } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
+import {
+  SiBlazor,
+  SiDocker,
+  SiDotnet,
+  SiFlutter,
+  SiGithubactions,
+  SiGitlab,
+  SiGrafana,
+  SiKalilinux,
+  SiLaravel,
+  SiMetasploit,
+  SiNodedotjs,
+  SiOpentelemetry,
+  SiOwasp,
+  SiPython,
+  SiReact,
+  SiSentry,
+  SiSharp,
+  SiTeamcity,
+  SiVuedotjs
+} from 'react-icons/si';
+import { TbShieldCode } from 'react-icons/tb';
+import { VscAzure } from 'react-icons/vsc';
 import {
   siteContent,
   technologyGroups,
@@ -41,6 +65,29 @@ const navLabelKeys: Record<NavKey, keyof (typeof siteContent)['en']['ui']['nav']
 };
 
 const preferredLocaleKey = 'brunofelipe.dev:preferred-locale';
+
+const technologyIcons = {
+  sharp: SiSharp,
+  dotnet: SiDotnet,
+  node: SiNodedotjs,
+  laravel: SiLaravel,
+  python: SiPython,
+  react: SiReact,
+  vue: SiVuedotjs,
+  blazor: SiBlazor,
+  flutter: SiFlutter,
+  docker: SiDocker,
+  teamcity: SiTeamcity,
+  github: SiGithubactions,
+  gitlab: SiGitlab,
+  sentry: SiSentry,
+  grafana: SiGrafana,
+  opentelemetry: SiOpentelemetry,
+  metasploit: SiMetasploit,
+  kali: SiKalilinux,
+  owasp: SiOwasp,
+  ptes: TbShieldCode
+} as const;
 
 function cleanPath(value: string) {
   return value.replace(/\/+$/, '') || '/';
@@ -451,16 +498,30 @@ function TechBanner({ locale }: { locale: Locale }) {
         <span>{banner.description}</span>
       </div>
       <div className="cloud-providers" aria-label="Cloud providers">
-        <div><img src="/images/brands/aws.png" alt="AWS" /></div>
-        <div><img src="/images/brands/digitalocean.svg" alt="DigitalOcean" /><span>DigitalOcean</span></div>
-        <div><img src="/images/brands/cloudflare.svg" alt="Cloudflare" /><span>Cloudflare</span></div>
+        <div className="provider-aws"><img src="/images/brands/aws.png" alt="AWS" /></div>
+        <div className="provider-azure"><VscAzure aria-hidden="true" /><span>Microsoft Azure</span></div>
+        <div className="provider-digitalocean"><img src="/images/brands/digitalocean.svg" alt="DigitalOcean" /><span>DigitalOcean</span></div>
+        <div className="provider-cloudflare"><img src="/images/brands/cloudflare.svg" alt="Cloudflare" /><span>Cloudflare</span></div>
       </div>
       <div className="technology-matrix">
         {technologyGroups.map((group) => (
           <div className={`technology-group ${group.key}`} key={group.key}>
             <strong>{group.label}</strong>
-            <div>
-              {group.items.map((item) => <span key={item}>{item}</span>)}
+            <div className="technology-items">
+              {group.items.map((item) => {
+                const Icon = technologyIcons[item.icon];
+                return (
+                  <div
+                    className="technology-item"
+                    key={item.name}
+                    style={{ '--tech-color': item.color } as CSSProperties}
+                    title={item.name}
+                  >
+                    <Icon aria-hidden="true" />
+                    <span>{item.name}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
