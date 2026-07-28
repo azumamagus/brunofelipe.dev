@@ -1,0 +1,7 @@
+commands:
+  setup:
+    - kool docker kooldev/node:22 pnpm install
+  dev:
+    - kool docker kooldev/node:22 pnpm dev --host 0.0.0.0
+  build:
+    - kool docker kooldev/node:22 pnpm build
