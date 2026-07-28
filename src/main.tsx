@@ -1,13 +1,29 @@
-import { StrictMode, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  StrictMode,
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode
+} from 'react';
 import { createRoot } from 'react-dom/client';
-import { articles, capabilities, experience, profile, projects, skills } from './content';
+import {
+  articles,
+  contributions,
+  education,
+  profile,
+  projects,
+  skillGroups,
+  works,
+  type Project,
+  type Work
+} from './content';
 import './styles.css';
 
-type RouteKey = 'home' | 'about' | 'projects' | 'open-source' | 'works' | 'articles' | 'contact' | 'resume';
+type NavKey = 'home' | 'about' | 'projects' | 'open-source' | 'works' | 'articles' | 'contact' | 'resume';
 
-const routes: { key: RouteKey; label: string; path: string }[] = [
-  { key: 'home', label: 'Início', path: '/' },
-  { key: 'about', label: 'Sobre', path: '/about' },
+const navItems: { key: NavKey; label: string; path: string }[] = [
+  { key: 'home', label: 'Home', path: '/' },
+  { key: 'about', label: 'Sobre mim', path: '/about' },
   { key: 'projects', label: 'Projetos', path: '/projects' },
   { key: 'open-source', label: 'Open Source', path: '/open-source' },
   { key: 'works', label: 'Experiência', path: '/works' },
@@ -16,573 +32,662 @@ const routes: { key: RouteKey; label: string; path: string }[] = [
   { key: 'resume', label: 'Currículo', path: '/resume' }
 ];
 
-const routeTitles: Record<RouteKey, string> = {
-  home: 'Bruno Felipe — Developer & Security',
-  about: 'Sobre — Bruno Felipe',
-  projects: 'Projetos — Bruno Felipe',
-  'open-source': 'Open Source — Bruno Felipe',
-  works: 'Experiência — Bruno Felipe',
-  articles: 'Artigos — Bruno Felipe',
-  contact: 'Contato — Bruno Felipe',
-  resume: 'Currículo — Bruno Felipe'
+const titles: Record<NavKey, string> = {
+  home: 'Bruno Da Cunha Felipe — Desenvolvedor .NET, PHP & Cybersecurity',
+  about: 'Sobre mim — Bruno Da Cunha Felipe',
+  projects: 'Projetos — Bruno Da Cunha Felipe',
+  'open-source': 'Open Source — Bruno Da Cunha Felipe',
+  works: 'Experiência — Bruno Da Cunha Felipe',
+  articles: 'Artigos — Bruno Da Cunha Felipe',
+  contact: 'Contato — Bruno Da Cunha Felipe',
+  resume: 'Currículo — Bruno Da Cunha Felipe'
 };
 
-function normalizePath(pathname: string) {
-  const clean = pathname.replace(/\/+$/, '') || '/';
-  return clean;
+function cleanPath(value: string) {
+  return value.replace(/\/+$/, '') || '/';
 }
 
-function currentRoute(pathname = window.location.pathname): RouteKey {
-  const match = routes.find((route) => normalizePath(route.path) === normalizePath(pathname));
-  return match?.key ?? 'home';
+function navKeyFromPath(pathname: string): NavKey {
+  const path = cleanPath(pathname);
+  if (path.startsWith('/projects')) return 'projects';
+  if (path.startsWith('/works')) return 'works';
+  if (path.startsWith('/articles')) return 'articles';
+  return navItems.find((item) => item.path === path)?.key ?? 'home';
 }
 
-function useRoute() {
-  const [route, setRoute] = useState<RouteKey>(() => currentRoute());
+function useRouter() {
+  const [pathname, setPathname] = useState(() => cleanPath(window.location.pathname));
 
   useEffect(() => {
-    const handlePopState = () => setRoute(currentRoute());
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    const onPopState = () => setPathname(cleanPath(window.location.pathname));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
   useEffect(() => {
-    document.title = routeTitles[route];
+    document.title = titles[navKeyFromPath(pathname)];
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [route]);
+  }, [pathname]);
 
   function navigate(path: string) {
-    if (path.startsWith('http') || path.startsWith('mailto:')) {
+    if (/^(https?:|mailto:)/.test(path)) {
       window.location.href = path;
       return;
     }
     window.history.pushState({}, '', path);
-    setRoute(currentRoute(path));
+    setPathname(cleanPath(path));
   }
 
-  return { route, navigate };
+  return { pathname, navigate };
 }
 
 function Arrow() {
-  return <span aria-hidden="true">↗</span>;
+  return <span aria-hidden="true">→</span>;
 }
 
-function Brand({ onNavigate }: { onNavigate: (path: string) => void }) {
+function RouteLink({
+  href,
+  navigate,
+  children,
+  className
+}: {
+  href: string;
+  navigate: (path: string) => void;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <a className="brand" href="/" onClick={(event) => { event.preventDefault(); onNavigate('/'); }} aria-label="Ir para o início">
-      <span className="brand-mark">{profile.initials}</span>
-      <span className="brand-copy">
-        <strong>{profile.name}</strong>
-        <small>DEV / SECURITY</small>
-      </span>
+    <a
+      className={className}
+      href={href}
+      onClick={(event) => {
+        if (href.startsWith('/')) {
+          event.preventDefault();
+          navigate(href);
+        }
+      }}
+      target={href.startsWith('http') ? '_blank' : undefined}
+      rel={href.startsWith('http') ? 'noreferrer' : undefined}
+    >
+      {children}
     </a>
   );
 }
 
-function Header({ route, onNavigate }: { route: RouteKey; onNavigate: (path: string) => void }) {
-  const [open, setOpen] = useState(false);
+function Header({
+  active,
+  navigate
+}: {
+  active: NavKey;
+  navigate: (path: string) => void;
+}) {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 70);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <header className="site-header">
-      <div className="header-inner">
-        <Brand onNavigate={onNavigate} />
-        <nav className={open ? 'nav nav-open' : 'nav'} aria-label="Navegação principal">
-          {routes.map((item) => (
-            <a
-              key={item.key}
-              className={route === item.key ? 'nav-link active' : 'nav-link'}
-              href={item.path}
-              onClick={(event) => {
-                event.preventDefault();
-                onNavigate(item.path);
-                setOpen(false);
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-        <div className="header-actions">
-          <span className="status-dot" aria-hidden="true" />
-          <span className="status-label">ONLINE</span>
-          <button
-            className="menu-button"
-            type="button"
-            aria-label={open ? 'Fechar menu' : 'Abrir menu'}
-            aria-expanded={open}
-            onClick={() => setOpen((value) => !value)}
-          >
-            <span />
-            <span />
-          </button>
-        </div>
+    <header className={scrolled ? 'site-header is-scrolled' : 'site-header'}>
+      <div className="header-profile">
+        <RouteLink href="/" navigate={navigate} className="avatar" >
+          <span className="avatar-grid" aria-hidden="true" />
+          <strong>{profile.initials}</strong>
+          <span className="avatar-status" aria-label="Disponível" />
+        </RouteLink>
+        <RouteLink href="/" navigate={navigate} className="profile-name">
+          {profile.name}
+        </RouteLink>
       </div>
+
+      <button
+        className="mobile-menu"
+        type="button"
+        aria-expanded={menuOpen}
+        aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+        onClick={() => setMenuOpen((value) => !value)}
+      >
+        <span />
+        <span />
+      </button>
+
+      <nav className={menuOpen ? 'main-nav is-open' : 'main-nav'} aria-label="Navegação principal">
+        {navItems.map((item) => (
+          <RouteLink
+            key={item.key}
+            href={item.path}
+            navigate={(path) => {
+              navigate(path);
+              setMenuOpen(false);
+            }}
+            className={active === item.key ? 'nav-link active' : 'nav-link'}
+          >
+            {item.label}
+          </RouteLink>
+        ))}
+      </nav>
     </header>
   );
 }
 
-function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
+function Footer() {
   return (
     <footer className="site-footer">
-      <div className="footer-cta">
-        <p className="eyebrow">Tem um desafio em mente?</p>
-        <a href="/contact" onClick={(event) => { event.preventDefault(); onNavigate('/contact'); }}>
-          Vamos investigar juntos. <Arrow />
-        </a>
+      <div>
+        <p>© {new Date().getFullYear()} {profile.name}.</p>
+        <span>Construído com React, TypeScript e curiosidade.</span>
       </div>
-      <div className="footer-bottom">
-        <p>© {new Date().getFullYear()} {profile.name}. Construído com intenção.</p>
-        <div>
-          {profile.links.map((link) => (
-            <a key={link.label} href={link.href} target={link.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
-              {link.label}
-            </a>
-          ))}
-        </div>
-      </div>
+      <nav aria-label="Links externos">
+        {profile.links.map((link) => (
+          <a
+            key={link.label}
+            href={link.href}
+            target={link.href.startsWith('http') ? '_blank' : undefined}
+            rel="noreferrer"
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
     </footer>
   );
 }
 
-function PageShell({ eyebrow, title, intro, children }: { eyebrow: string; title: string; intro: string; children: ReactNode }) {
+function SectionTitle({
+  title,
+  action,
+  actionPath,
+  navigate
+}: {
+  title: string;
+  action?: string;
+  actionPath?: string;
+  navigate?: (path: string) => void;
+}) {
   return (
-    <>
-      <section className="page-hero reveal">
-        <p className="eyebrow">{eyebrow}</p>
-        <h1>{title}</h1>
-        <p className="page-intro">{intro}</p>
-      </section>
-      {children}
-    </>
+    <div className="section-title">
+      <h2>{title}</h2>
+      {action && actionPath && navigate ? (
+        <RouteLink href={actionPath} navigate={navigate} className="view-all">
+          {action} <Arrow />
+        </RouteLink>
+      ) : null}
+    </div>
   );
 }
 
-function SignalPanel() {
-  const checks = [
-    ['APPLICATION', 'READY'],
-    ['SECURITY', 'ACTIVE'],
-    ['DELIVERY', 'AUTOMATED']
-  ];
-
+function PageIntro({ title, description }: { title: string; description: string }) {
   return (
-    <aside className="signal-panel" aria-label="Painel de especialidades">
-      <div className="panel-head">
-        <span>SYSTEM / PROFILE</span>
-        <span className="live-pill">LIVE</span>
+    <section className="page-intro">
+      <p className="terminal-label">~/bruno/{title.toLowerCase().replaceAll(' ', '-')}</p>
+      <h1>{title}</h1>
+      <p>{description}</p>
+    </section>
+  );
+}
+
+function TechBanner() {
+  const technologies = ['.NET', 'C#', 'PHP', 'Laravel', 'React', 'PostgreSQL', 'Docker', 'AWS'];
+  return (
+    <div className="tech-banner" role="img" aria-label="Tecnologias e áreas de atuação de Bruno">
+      <div className="banner-copy">
+        <p><span className="prompt">$</span> whoami</p>
+        <strong>software_developer</strong>
+        <span>backend · web · cloud</span>
       </div>
-      <div className="radar" aria-hidden="true">
-        <span className="radar-axis radar-axis-x" />
-        <span className="radar-axis radar-axis-y" />
-        <span className="radar-ring radar-ring-one" />
-        <span className="radar-ring radar-ring-two" />
-        <span className="radar-sweep" />
-        <span className="radar-core">BF</span>
+      <div className="orbit-panel" aria-hidden="true">
+        <span className="orbit orbit-one" />
+        <span className="orbit orbit-two" />
+        <span className="orbit-cross orbit-cross-x" />
+        <span className="orbit-cross orbit-cross-y" />
+        <strong>BF</strong>
       </div>
-      <div className="signal-checks">
-        {checks.map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <strong><i /> {value}</strong>
-          </div>
+      <div className="banner-stack">
+        {technologies.map((tech, index) => (
+          <span key={tech} style={{ '--order': index } as React.CSSProperties}>{tech}</span>
         ))}
       </div>
-      <p className="terminal-line"><span>$</span> building_secure_products<span className="cursor">_</span></p>
-    </aside>
+      <div className="banner-modes">
+        <span><i /> BUILD</span>
+        <span><i /> SECURE</span>
+        <span><i /> PLAY</span>
+      </div>
+    </div>
   );
 }
 
-function Home({ onNavigate }: { onNavigate: (path: string) => void }) {
+function ProjectCard({ project, navigate }: { project: Project; navigate: (path: string) => void }) {
+  return (
+    <RouteLink href={`/projects/${project.slug}`} navigate={navigate} className="content-card project-card">
+      <div className="project-visual" aria-hidden="true">
+        <span className="window-bar"><i /><i /><i /></span>
+        <span className="visual-path">src/{project.slug}</span>
+        <strong>{project.title.slice(0, 2).toUpperCase()}</strong>
+        <span className="visual-scan" />
+      </div>
+      <div className="card-body">
+        <span className="card-kicker">{project.category}</span>
+        <h3>{project.title}</h3>
+        <p>{project.description}</p>
+        <div className="tags">
+          {project.stack.map((tech) => <span key={tech}>{tech}</span>)}
+        </div>
+        <span className="card-link">Ver projeto <Arrow /></span>
+      </div>
+    </RouteLink>
+  );
+}
+
+function WorkCard({ work, navigate }: { work: Work; navigate: (path: string) => void }) {
+  return (
+    <RouteLink href={`/works/${work.slug}`} navigate={navigate} className="content-card work-card">
+      <div className="company-mark" aria-hidden="true">{work.company.split(' ').map((word) => word[0]).slice(0, 2).join('')}</div>
+      <span className="card-kicker">{work.dateRange}</span>
+      <h3>{work.company}</h3>
+      <strong>{work.title}</strong>
+      <p>{work.summary}</p>
+      <span className="card-link">Ver experiência <Arrow /></span>
+    </RouteLink>
+  );
+}
+
+function ContributionCard({ item }: { item: (typeof contributions)[number] }) {
+  return (
+    <article className="content-card contribution-card">
+      <div className="repo-line">
+        <span className="repo-icon" aria-hidden="true">&lt;/&gt;</span>
+        <span>PUBLIC / LAB</span>
+      </div>
+      <h3>{item.title}</h3>
+      <p>{item.description}</p>
+      <div className="tags">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+    </article>
+  );
+}
+
+function ArticleCard({ article }: { article: (typeof articles)[number] }) {
+  return (
+    <article className="content-card article-card">
+      <div className="article-visual" aria-hidden="true">
+        <span>FIELD_NOTE</span>
+        <strong>{article.slug.split('-').slice(0, 2).join('_')}</strong>
+        <i />
+      </div>
+      <div className="card-body">
+        <div className="article-meta"><span>{article.date}</span><span>·</span><span>{article.readingTime}</span></div>
+        <h3>{article.title}</h3>
+        <p>{article.description}</p>
+        <span className="card-link muted">Publicação em breve</span>
+      </div>
+    </article>
+  );
+}
+
+function Home({ navigate }: { navigate: (path: string) => void }) {
   return (
     <>
-      <section className="hero">
-        <div className="hero-copy reveal">
-          <p className="eyebrow">BRUNO FELIPE / BRASIL / UTC−3</p>
-          <h1>Construo sistemas.<br /><em>Quebro suposições.</em></h1>
-          <p className="hero-summary">{profile.summary}</p>
-          <div className="hero-actions">
-            <a className="button button-primary" href="/projects" onClick={(event) => { event.preventDefault(); onNavigate('/projects'); }}>
-              Explorar projetos <Arrow />
-            </a>
-            <a className="button button-ghost" href="/contact" onClick={(event) => { event.preventDefault(); onNavigate('/contact'); }}>
-              Iniciar conversa
-            </a>
-          </div>
+      <section className="home-intro">
+        <TechBanner />
+        <p className="terminal-label">~/profile <span className="cursor">_</span></p>
+        <h1>{profile.headline}</h1>
+        <div className="profile-copy">
+          {profile.about.slice(0, 2).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
         </div>
-        <SignalPanel />
+        <p className="location-line">Trabalhando a partir de {profile.location}.</p>
+        <p className="social-line">
+          Encontre-me no{' '}
+          <a href={profile.links[0].href} target="_blank" rel="noreferrer">{profile.links[0].label}</a>
+          {' '}ou no{' '}
+          <a href={profile.links[1].href} target="_blank" rel="noreferrer">{profile.links[1].label}</a>.
+        </p>
       </section>
 
-      <section className="trust-bar reveal">
-        <p><span className="status-dot" /> {profile.availability}</p>
-        <div>
-          <span>DEVELOPMENT</span>
-          <span>CYBERSECURITY</span>
-          <span>PENTEST</span>
-          <span>DEVSECOPS</span>
-        </div>
+      <section className="status-board">
+        <div><span>FOCO ATUAL</span><strong>.NET · PHP · APIs</strong></div>
+        <div><span>ESTUDANDO</span><strong>Cybersecurity · Pentest</strong></div>
+        <div><span>SIDE QUEST</span><strong>Game Development</strong></div>
+        <div><span>STATUS</span><strong className="online"><i /> Disponível</strong></div>
       </section>
 
-      <section className="section reveal">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">O QUE EU FAÇO</p>
-            <h2>Engenharia com<br />mentalidade adversarial.</h2>
-          </div>
-          <p>O melhor produto não é apenas bonito e funcional. Ele entende seus limites, reduz riscos e permanece confiável quando o contexto muda.</p>
-        </div>
-        <div className="capability-grid">
-          {capabilities.map((item) => (
-            <article className="capability-card" key={item.code}>
-              <span className="card-code">{item.code}</span>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-              <div className="tag-row">
-                {item.tags.map((tag) => <span key={tag}>{tag}</span>)}
-              </div>
-            </article>
+      <section className="home-section">
+        <SectionTitle title="Projetos em destaque" action="Ver todos os projetos" actionPath="/projects" navigate={navigate} />
+        <div className="card-grid three">
+          {projects.filter((item) => item.featured).map((project) => (
+            <ProjectCard key={project.slug} project={project} navigate={navigate} />
           ))}
         </div>
       </section>
 
-      <section className="section project-preview reveal">
-        <div className="section-kicker">
-          <p className="eyebrow">PROJETOS SELECIONADOS</p>
-          <a href="/projects" onClick={(event) => { event.preventDefault(); onNavigate('/projects'); }}>Ver todos <Arrow /></a>
+      <section className="home-section">
+        <SectionTitle title="Open Source & Labs" action="Ver contribuições" actionPath="/open-source" navigate={navigate} />
+        <div className="card-grid two">
+          {contributions.slice(0, 2).map((item) => <ContributionCard key={item.title} item={item} />)}
         </div>
-        {projects.filter((project) => project.featured).map((project) => (
-          <ProjectRow key={project.slug} project={project} onNavigate={onNavigate} />
-        ))}
       </section>
 
-      <section className="manifesto reveal">
-        <span className="manifesto-index">[ MANIFESTO_01 ]</span>
-        <blockquote>
-          “Código é comportamento.<br />
-          <em>Segurança é contexto.</em>”
-        </blockquote>
-        <p>Meu trabalho vive no encontro entre os dois.</p>
+      <section className="home-section">
+        <SectionTitle title="Experiência" action="Ver trajetória completa" actionPath="/works" navigate={navigate} />
+        <div className="card-grid three">
+          {works.slice(0, 3).map((work) => <WorkCard key={work.slug} work={work} navigate={navigate} />)}
+        </div>
+      </section>
+
+      <section className="home-section">
+        <SectionTitle title="Artigos & notas" action="Ver todos os artigos" actionPath="/articles" navigate={navigate} />
+        <div className="card-grid three">
+          {articles.map((article) => <ArticleCard key={article.slug} article={article} />)}
+        </div>
       </section>
     </>
-  );
-}
-
-function ProjectRow({ project, onNavigate }: { project: (typeof projects)[number]; onNavigate: (path: string) => void }) {
-  return (
-    <a
-      className="project-row"
-      href={project.href}
-      onClick={(event) => {
-        if (project.href.startsWith('/')) {
-          event.preventDefault();
-          onNavigate(project.href);
-        }
-      }}
-      target={project.href.startsWith('http') ? '_blank' : undefined}
-      rel="noreferrer"
-    >
-      <span className="project-index">{project.index}</span>
-      <div>
-        <p>{project.type}</p>
-        <h3>{project.title}</h3>
-      </div>
-      <div className="project-tags">
-        {project.tags.slice(0, 3).map((tag) => <span key={tag}>{tag}</span>)}
-      </div>
-      <span className="project-arrow"><Arrow /></span>
-    </a>
   );
 }
 
 function About() {
   return (
-    <PageShell
-      eyebrow="ABOUT / PROFILE"
-      title="Curiosidade técnica. Critério de produto."
-      intro="Sou Bruno Felipe, desenvolvedor com interesse profundo em cybersecurity. Gosto de entender sistemas por dentro — como são construídos, onde falham e como podem evoluir."
-    >
-      <section className="about-grid reveal">
-        <div className="about-statement">
-          <p>Minha abordagem</p>
-          <h2>Entender antes de construir. Testar antes de confiar. Documentar para continuar.</h2>
-        </div>
-        <div className="about-copy">
-          <p>Atuo entre desenvolvimento de software e segurança ofensiva, aproximando duas disciplinas que deveriam conversar desde o primeiro requisito.</p>
-          <p>Em um projeto, procuro reduzir complexidade sem esconder decisões importantes. Em um assessment, procuro evidências e impacto real — não uma lista automática de alertas.</p>
-          <p>Este site também é um laboratório aberto: evolui junto com meus projetos, pesquisas e aprendizados.</p>
-        </div>
+    <>
+      <PageIntro
+        title="Sobre mim"
+        description="Da operação ao desenvolvimento: uma trajetória construída resolvendo problemas reais com software, dados e infraestrutura."
+      />
+      <section className="prose-block">
+        {profile.about.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
       </section>
-      <section className="section reveal">
-        <div className="section-kicker"><p className="eyebrow">TOOLKIT / MINDSET</p></div>
-        <div className="skills-grid">
-          {skills.map((skill) => (
-            <div className="skill-group" key={skill.group}>
-              <h3>{skill.group}</h3>
-              <ul>{skill.items.map((item) => <li key={item}>{item}</li>)}</ul>
-            </div>
+
+      <section className="home-section">
+        <SectionTitle title="Competências" />
+        <div className="card-grid two skills-grid">
+          {skillGroups.map((group) => (
+            <article className="content-card skill-card" key={group.group}>
+              <h3>{group.group}</h3>
+              <ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul>
+            </article>
           ))}
         </div>
       </section>
-      <section className="principles reveal">
-        <p className="eyebrow">PRINCÍPIOS</p>
-        <div><span>01</span><h3>Clareza vence complexidade acidental.</h3></div>
-        <div><span>02</span><h3>Segurança precisa de contexto, não de teatro.</h3></div>
-        <div><span>03</span><h3>O que não pode ser explicado ainda não está pronto.</h3></div>
+
+      <section className="home-section">
+        <SectionTitle title="Formação acadêmica" />
+        <div className="education-list">
+          {education.map((item) => (
+            <article key={item.institution}>
+              <span>{item.period}</span>
+              <div>
+                <h3>{item.institution}</h3>
+                <strong>{item.course}</strong>
+                <p>{item.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
-    </PageShell>
+    </>
   );
 }
 
-function Projects({ onNavigate }: { onNavigate: (path: string) => void }) {
+function Projects({ navigate }: { navigate: (path: string) => void }) {
   return (
-    <PageShell
-      eyebrow="PROJECT INDEX / 2026"
-      title="Projetos com decisões visíveis."
-      intro="Cada case registra contexto, escolhas técnicas e resultado. A tecnologia aparece como meio — não como protagonista."
-    >
-      <section className="project-list reveal">
-        {projects.map((project) => (
-          <article className="project-case" key={project.slug}>
-            <div className="project-case-head">
-              <span>{project.index}</span>
-              <span className="project-status"><i /> {project.status}</span>
-            </div>
-            <p className="eyebrow">{project.type}</p>
-            <h2>{project.title}</h2>
-            <p className="project-description">{project.description}</p>
-            <dl>
-              <div><dt>Desafio</dt><dd>{project.challenge}</dd></div>
-              <div><dt>Resultado</dt><dd>{project.result}</dd></div>
-            </dl>
-            <div className="project-case-footer">
-              <div className="tag-row">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-              <a
-                href={project.href}
-                onClick={(event) => {
-                  if (project.href.startsWith('/')) {
-                    event.preventDefault();
-                    onNavigate(project.href);
-                  }
-                }}
-                target={project.href.startsWith('http') ? '_blank' : undefined}
-                rel="noreferrer"
-              >
-                Abrir projeto <Arrow />
-              </a>
-            </div>
-          </article>
-        ))}
+    <>
+      <PageIntro
+        title="Projetos"
+        description="Soluções que combinam desenvolvimento web, APIs, dados, modernização e experimentação."
+      />
+      <section className="home-section page-list">
+        <div className="card-grid three">
+          {projects.map((project) => <ProjectCard key={project.slug} project={project} navigate={navigate} />)}
+        </div>
       </section>
-    </PageShell>
+    </>
   );
 }
 
-function OpenSource({ onNavigate }: { onNavigate: (path: string) => void }) {
+function OpenSource() {
   return (
-    <PageShell
-      eyebrow="OPEN SOURCE / PUBLIC WORK"
-      title="Conhecimento melhora quando circula."
-      intro="Código, experimentos e documentação publicados para que outras pessoas possam estudar, questionar e construir a partir deles."
-    >
-      <section className="oss-feature reveal">
-        <div className="oss-visual" aria-hidden="true">
-          <span className="code-line">01&nbsp;&nbsp;const portfolio = {'{'}</span>
-          <span className="code-line">02&nbsp;&nbsp;&nbsp;&nbsp;surface: 'edge',</span>
-          <span className="code-line accent">03&nbsp;&nbsp;&nbsp;&nbsp;security: 'by-design',</span>
-          <span className="code-line">04&nbsp;&nbsp;&nbsp;&nbsp;status: 'open-source'</span>
-          <span className="code-line">05&nbsp;&nbsp;{'}'};</span>
-        </div>
-        <div>
-          <p className="eyebrow">FEATURED REPOSITORY</p>
-          <h2>brunofelipe.dev</h2>
-          <p>A própria plataforma deste portfólio: React, TypeScript, conteúdo local e infraestrutura preparada para Cloudflare Pages.</p>
-          <div className="tag-row"><span>MIT</span><span>React</span><span>TypeScript</span></div>
-          <a className="button button-primary" href="https://github.com/brunofelipe/brunofelipe.dev" target="_blank" rel="noreferrer">Ver repositório <Arrow /></a>
+    <>
+      <PageIntro
+        title="Open Source"
+        description="Projetos, laboratórios e anotações publicados para documentar aprendizados e contribuir com a comunidade."
+      />
+      <section className="home-section page-list">
+        <div className="card-grid two">
+          {contributions.map((item) => <ContributionCard key={item.title} item={item} />)}
         </div>
       </section>
-      <section className="section reveal">
-        <div className="section-heading compact">
-          <div><p className="eyebrow">LAB NOTES</p><h2>Em preparação.</h2></div>
-          <p>Os próximos conteúdos incluem checklists de segurança web, scripts de automação e write-ups de laboratórios controlados.</p>
-        </div>
-        <button className="text-link" onClick={() => onNavigate('/contact')}>Sugerir um tema <Arrow /></button>
-      </section>
-    </PageShell>
+    </>
   );
 }
 
-function Works() {
+function Works({ navigate }: { navigate: (path: string) => void }) {
   return (
-    <PageShell
-      eyebrow="EXPERIENCE / PRACTICE"
-      title="Experiência é o que permanece depois da entrega."
-      intro="Uma trajetória em construção, orientada por projetos reais, estudo contínuo e responsabilidade sobre o resultado."
-    >
-      <section className="timeline reveal">
-        {experience.map((item, index) => (
-          <article key={item.role}>
-            <span className="timeline-count">0{index + 1}</span>
-            <p className="timeline-period">{item.period}</p>
-            <div>
-              <p className="eyebrow">{item.company}</p>
-              <h2>{item.role}</h2>
-              <p>{item.description}</p>
-              <div className="tag-row">{item.stack.map((tag) => <span key={tag}>{tag}</span>)}</div>
-            </div>
-          </article>
-        ))}
+    <>
+      <PageIntro
+        title="Experiência"
+        description="Mais de uma década entre suporte, bancos de dados, implantação e desenvolvimento de software."
+      />
+      <section className="home-section page-list">
+        <SectionTitle title="Trajetória profissional" />
+        <div className="card-grid two">
+          {works.map((work) => <WorkCard key={work.slug} work={work} navigate={navigate} />)}
+        </div>
       </section>
-    </PageShell>
+    </>
   );
 }
 
 function Articles() {
   return (
-    <PageShell
-      eyebrow="FIELD NOTES / ARTICLES"
-      title="Notas sobre construir e investigar."
-      intro="Artigos diretos sobre engenharia, segurança ofensiva e os detalhes que costumam ficar entre o código e o incidente."
-    >
-      <section className="article-grid reveal">
-        {articles.map((article, index) => (
-          <article key={article.title}>
-            <div className="article-meta"><span>{article.date}</span><span>{article.readingTime}</span></div>
-            <span className="article-number">0{index + 1}</span>
-            <h2>{article.title}</h2>
-            <p>{article.excerpt}</p>
-            <span className="soon-label">PUBLICAÇÃO EM PREPARAÇÃO</span>
-          </article>
-        ))}
+    <>
+      <PageIntro
+        title="Artigos"
+        description="Notas sobre .NET, PHP, bancos de dados, segurança de aplicações e aprendizados de quem conhece o software também pela operação."
+      />
+      <section className="home-section page-list">
+        <div className="card-grid two">
+          {articles.map((article) => <ArticleCard key={article.slug} article={article} />)}
+        </div>
       </section>
-    </PageShell>
+    </>
   );
 }
 
 function Contact() {
-  const [sent, setSent] = useState(false);
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [opened, setOpened] = useState(false);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const subject = encodeURIComponent(`Contato pelo portfólio — ${String(form.get('name') || '')}`);
-    const body = encodeURIComponent(`${String(form.get('message') || '')}\n\nDe: ${String(form.get('email') || '')}`);
-    setSent(true);
+    const data = new FormData(event.currentTarget);
+    const subject = encodeURIComponent(`Contato pelo portfólio — ${String(data.get('name') || '')}`);
+    const body = encodeURIComponent(
+      `${String(data.get('message') || '')}\n\nContato: ${String(data.get('email') || '')}`
+    );
+    setOpened(true);
     window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`;
   }
 
   return (
-    <PageShell
-      eyebrow="CONTACT / SECURE CHANNEL"
-      title="Toda boa colaboração começa com contexto."
-      intro="Conte sobre o produto, o desafio técnico ou a superfície que você quer avaliar. Responderei com perguntas objetivas e próximos passos."
-    >
-      <section className="contact-layout reveal">
-        <form className="contact-form" onSubmit={handleSubmit}>
+    <>
+      <PageIntro
+        title="Contato"
+        description="Tem um projeto, uma integração, um sistema legado ou uma conversa sobre segurança? Envie o contexto inicial."
+      />
+      <section className="contact-card">
+        <h2>Vamos conversar</h2>
+        <form onSubmit={submit}>
           <label>
-            <span>01 / Seu nome</span>
-            <input name="name" type="text" placeholder="Como devo chamar você?" required />
+            Nome
+            <input name="name" type="text" placeholder="Seu nome" required />
           </label>
           <label>
-            <span>02 / Seu e-mail</span>
+            E-mail
             <input name="email" type="email" placeholder="voce@empresa.com" required />
           </label>
           <label>
-            <span>03 / Contexto</span>
-            <textarea name="message" rows={6} placeholder="Projeto, prazo, desafio e o que seria uma boa entrega para você." required />
+            Mensagem
+            <textarea name="message" rows={6} placeholder="Conte um pouco sobre o desafio." required />
           </label>
-          <button className="button button-primary" type="submit">Preparar mensagem <Arrow /></button>
-          {sent && <p className="form-note" role="status">Seu aplicativo de e-mail será aberto para concluir o envio.</p>}
+          <button className="primary-button" type="submit">Preparar e-mail <Arrow /></button>
+          {opened ? <p className="form-status">Seu aplicativo de e-mail será aberto para concluir o envio.</p> : null}
         </form>
-        <aside className="contact-aside">
-          <div>
-            <p className="eyebrow">DIRECT LINE</p>
-            <a href={`mailto:${profile.email}`}>{profile.email}</a>
-          </div>
-          <div>
-            <p className="eyebrow">LOCATION</p>
-            <p>{profile.location}</p>
-          </div>
-          <div>
-            <p className="eyebrow">STATUS</p>
-            <p><span className="status-dot" /> {profile.availability}</p>
-          </div>
-          <p className="contact-note">Para testes de segurança, envie apenas informações iniciais. Escopo, autorização e tratamento de dados são definidos antes de qualquer atividade.</p>
-        </aside>
       </section>
-    </PageShell>
+      <section className="home-section contact-alternatives">
+        <SectionTitle title="Outros canais" />
+        <div className="card-grid three">
+          <article className="content-card small-card">
+            <span className="card-kicker">E-mail</span>
+            <a href={`mailto:${profile.email}`}>{profile.email}</a>
+            <p>Envie uma mensagem direta e responderei assim que possível.</p>
+          </article>
+          <article className="content-card small-card">
+            <span className="card-kicker">LinkedIn</span>
+            <a href={profile.links[0].href} target="_blank" rel="noreferrer">brunodcfelipe</a>
+            <p>Perfil profissional, histórico e conexão.</p>
+          </article>
+          <article className="content-card small-card">
+            <span className="card-kicker">Localização</span>
+            <strong>Bauru, SP</strong>
+            <p>Disponível para colaboração remota.</p>
+          </article>
+        </div>
+      </section>
+    </>
   );
 }
 
 function Resume() {
   return (
-    <PageShell
-      eyebrow="RESUME / PRINTABLE PROFILE"
-      title="Bruno Felipe."
-      intro={profile.role}
-    >
-      <section className="resume-sheet reveal">
-        <div className="resume-top">
-          <div>
-            <p>{profile.location}</p>
-            <a href={`mailto:${profile.email}`}>{profile.email}</a>
-          </div>
-          <button className="button button-primary no-print" onClick={() => window.print()}>Salvar em PDF / Imprimir</button>
+    <>
+      <PageIntro
+        title="Currículo"
+        description={`${profile.headline} ${profile.location}.`}
+      />
+      <section className="resume-sheet">
+        <div className="resume-actions no-print">
+          <button className="primary-button" type="button" onClick={() => window.print()}>
+            Salvar em PDF / Imprimir
+          </button>
         </div>
         <div className="resume-section">
-          <p className="eyebrow">PERFIL</p>
-          <p className="resume-lead">{profile.summary}</p>
+          <h2>Perfil</h2>
+          <p>{profile.summary}</p>
         </div>
         <div className="resume-section">
-          <p className="eyebrow">ATUAÇÃO</p>
-          {experience.map((item) => (
-            <div className="resume-entry" key={item.role}>
-              <span>{item.period}</span>
-              <div><h2>{item.role}</h2><p>{item.company}</p><p>{item.description}</p></div>
-            </div>
+          <h2>Experiência</h2>
+          {works.map((work) => (
+            <article className="resume-entry" key={work.slug}>
+              <span>{work.dateRange}</span>
+              <div>
+                <h3>{work.title}</h3>
+                <strong>{work.company} · {work.location}</strong>
+                <p>{work.summary}</p>
+              </div>
+            </article>
           ))}
         </div>
         <div className="resume-section">
-          <p className="eyebrow">COMPETÊNCIAS</p>
+          <h2>Formação</h2>
+          {education.map((item) => (
+            <article className="resume-entry" key={item.institution}>
+              <span>{item.period}</span>
+              <div>
+                <h3>{item.course}</h3>
+                <strong>{item.institution}</strong>
+                <p>{item.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="resume-section">
+          <h2>Competências</h2>
           <div className="resume-skills">
-            {skills.map((skill) => <div key={skill.group}><h3>{skill.group}</h3><p>{skill.items.join(' · ')}</p></div>)}
+            {skillGroups.map((group) => (
+              <div key={group.group}>
+                <h3>{group.group}</h3>
+                <p>{group.items.join(' · ')}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-    </PageShell>
+    </>
   );
 }
 
-function NotFound({ onNavigate }: { onNavigate: (path: string) => void }) {
+function ProjectDetail({ project, navigate }: { project: Project; navigate: (path: string) => void }) {
+  return (
+    <>
+      <PageIntro title={project.title} description={project.description} />
+      <article className="detail-page">
+        <RouteLink href="/projects" navigate={navigate} className="back-link">← Voltar para projetos</RouteLink>
+        <p className="detail-kicker">{project.category}</p>
+        {project.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+        <div className="tags">{project.stack.map((tag) => <span key={tag}>{tag}</span>)}</div>
+      </article>
+    </>
+  );
+}
+
+function WorkDetail({ work, navigate }: { work: Work; navigate: (path: string) => void }) {
+  return (
+    <>
+      <PageIntro title={work.company} description={`${work.title} · ${work.dateRange}`} />
+      <article className="detail-page">
+        <RouteLink href="/works" navigate={navigate} className="back-link">← Voltar para experiência</RouteLink>
+        <p className="detail-kicker">{work.location}</p>
+        <p>{work.summary}</p>
+        {work.bullets?.length ? <ul>{work.bullets.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+        <div className="tags">{work.stack.map((tag) => <span key={tag}>{tag}</span>)}</div>
+      </article>
+    </>
+  );
+}
+
+function NotFound({ navigate }: { navigate: (path: string) => void }) {
   return (
     <section className="not-found">
-      <p className="eyebrow">ERROR / 404</p>
-      <h1>Rota não encontrada.</h1>
-      <p>O endpoint existe apenas na sua imaginação.</p>
-      <button className="button button-primary" onClick={() => onNavigate('/')}>Voltar ao início</button>
+      <p className="terminal-label">HTTP 404</p>
+      <h1>Página não encontrada.</h1>
+      <button className="primary-button" onClick={() => navigate('/')}>Voltar ao início</button>
     </section>
   );
 }
 
-function App() {
-  const { route, navigate } = useRoute();
-  const content = useMemo(() => {
-    const normalized = normalizePath(window.location.pathname);
-    if (!routes.some((item) => normalizePath(item.path) === normalized)) return <NotFound onNavigate={navigate} />;
-    switch (route) {
-      case 'about': return <About />;
-      case 'projects': return <Projects onNavigate={navigate} />;
-      case 'open-source': return <OpenSource onNavigate={navigate} />;
-      case 'works': return <Works />;
-      case 'articles': return <Articles />;
-      case 'contact': return <Contact />;
-      case 'resume': return <Resume />;
-      default: return <Home onNavigate={navigate} />;
-    }
-  }, [route]);
+function PageRouter({ pathname, navigate }: { pathname: string; navigate: (path: string) => void }) {
+  if (pathname.startsWith('/projects/')) {
+    const project = projects.find((item) => `/projects/${item.slug}` === pathname);
+    return project ? <ProjectDetail project={project} navigate={navigate} /> : <NotFound navigate={navigate} />;
+  }
+  if (pathname.startsWith('/works/')) {
+    const work = works.find((item) => `/works/${item.slug}` === pathname);
+    return work ? <WorkDetail work={work} navigate={navigate} /> : <NotFound navigate={navigate} />;
+  }
+  switch (pathname) {
+    case '/': return <Home navigate={navigate} />;
+    case '/about': return <About />;
+    case '/projects': return <Projects navigate={navigate} />;
+    case '/open-source': return <OpenSource />;
+    case '/works': return <Works navigate={navigate} />;
+    case '/articles': return <Articles />;
+    case '/contact': return <Contact />;
+    case '/resume': return <Resume />;
+    default: return <NotFound navigate={navigate} />;
+  }
+}
 
+function App() {
+  const { pathname, navigate } = useRouter();
   return (
-    <div className="app-shell">
-      <div className="ambient-grid" aria-hidden="true" />
-      <Header route={route} onNavigate={navigate} />
-      <main className="main-content">{content}</main>
-      <Footer onNavigate={navigate} />
+    <div className="app">
+      <div className="grid-background" aria-hidden="true" />
+      <div className="site-container">
+        <Header active={navKeyFromPath(pathname)} navigate={navigate} />
+        <main>
+          <PageRouter pathname={pathname} navigate={navigate} />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

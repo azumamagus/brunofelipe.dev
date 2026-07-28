@@ -1,6 +1,6 @@
 # brunofelipe.dev
 
-Portfólio pessoal de Bruno Felipe, voltado a desenvolvimento de software, cybersecurity e pentest.
+Portfólio pessoal de Bruno Da Cunha Felipe, voltado a .NET, PHP, bancos de dados, cybersecurity e game development como hobby.
 
 ## Stack
 
