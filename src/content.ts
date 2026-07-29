@@ -13,6 +13,7 @@ export type Project = {
 export type Work = {
   slug: string;
   company: string;
+  logo?: string;
   title: string;
   dateRange: string;
   location: string;
@@ -232,6 +233,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'sos-desenvolvedor',
         company: 'SOS Soluções em TI',
+        logo: '/images/works/sossystem.png',
         title: 'Desenvolvedor de Software',
         dateRange: 'jun 2019 - atual',
         location: 'Bauru, SP',
@@ -241,6 +243,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'rasc-full-stack',
         company: 'RASC - Rede de Assistência Social Cristã',
+        logo: '/images/works/rasc.jpg',
         title: 'Desenvolvedor Full Stack - Temporário',
         dateRange: 'jul 2025 - atual',
         location: 'Remoto',
@@ -250,8 +253,28 @@ export const siteContent: Record<Locale, SiteContent> = {
         stack: ['Laravel', '.NET', 'AWS', 'Azure']
       },
       {
+        slug: 'decola-sites',
+        company: 'Decola Sites',
+        logo: '/images/works/decola_sites.jpg',
+        title: 'Desenvolvedor Web Full Stack',
+        dateRange: 'out 2024 - atual',
+        location: 'Remoto',
+        summary:
+          'Desenvolvimento de sites e aplicações web responsivas, seguras e performáticas para clientes de diferentes segmentos, acompanhando cada projeto da arquitetura à publicação e manutenção.',
+        bullets: [
+          'Desenvolvimento full stack com WordPress, PHP, TypeScript, React e RPG',
+          'Criação e integração de APIs, sistemas internos e serviços de terceiros',
+          'Modelagem e integração de dados com MySQL, PostgreSQL e SQLite',
+          'Aplicação de inteligência artificial e automações em processos e experiências digitais',
+          'Otimização de SEO técnico, acessibilidade, Core Web Vitals e compatibilidade entre dispositivos',
+          'Versionamento, automação de entregas, monitoramento e manutenção contínua de projetos'
+        ],
+        stack: ['WordPress', 'PHP', 'TypeScript', 'React', 'RPG', 'MySQL', 'PostgreSQL', 'SQLite', 'IA']
+      },
+      {
         slug: 'mega-bilheteria',
         company: 'Mega Bilheteria',
+        logo: '/images/works/mega-bilheteria.png',
         title: 'Desenvolvedor Full Stack - Terceirizado',
         dateRange: 'out 2025 - atual',
         location: 'Remoto',
@@ -261,6 +284,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'home-office',
         company: 'Projetos sob demanda',
+        logo: '/images/works/projetos-demanda.png',
         title: 'Desenvolvedor Full Stack',
         dateRange: 'jun 2017 - atual',
         location: 'Bauru, SP - Remoto',
@@ -268,8 +292,26 @@ export const siteContent: Record<Locale, SiteContent> = {
         stack: ['Flutter', 'Laravel', 'CodeIgniter', 'C#', 'ASP.NET Core', 'Blazor']
       },
       {
+        slug: 'soulclinic-full-stack',
+        company: 'Soulclinic',
+        logo: '/images/works/soulclinic.png',
+        title: 'Desenvolvedor PHP Full Stack',
+        dateRange: 'jan 2023 - jul 2026',
+        location: 'Home office · Remoto',
+        summary:
+          'Desenvolvimento e evolução de plataformas para o setor de saúde, com integrações de pagamentos, serviços especializados e emissão de notas fiscais.',
+        bullets: [
+          'Construção e manutenção de aplicações PHP com CodeIgniter e Laravel',
+          'Desenvolvimento de APIs RESTful e integrações com ferramentas do ecossistema de saúde',
+          'Integração de meios de pagamento e automação da emissão de notas fiscais',
+          'Configuração e evolução de pipelines de CI/CD com GitHub Actions'
+        ],
+        stack: ['PHP', 'CodeIgniter', 'Laravel', 'REST APIs', 'GitHub Actions', 'Payments']
+      },
+      {
         slug: 'sos-suporte',
         company: 'SOS Soluções em TI',
+        logo: '/images/works/sossystem.png',
         title: 'Analista de Suporte',
         dateRange: 'set 2015 - jun 2019',
         location: 'Bauru e região',
@@ -281,6 +323,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'ostecnologic',
         company: 'Ostecnologic Soluções em Informática',
+        logo: '/images/works/ostecnologic.png',
         title: 'Analista de Suporte',
         dateRange: 'ago 2011 - ago 2015',
         location: 'Bauru, SP',
@@ -528,6 +571,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'sos-desenvolvedor',
         company: 'SOS Soluções em TI',
+        logo: '/images/works/sossystem.png',
         title: 'Software Developer',
         dateRange: 'Jun 2019 - Present',
         location: 'Bauru, Brazil',
@@ -537,6 +581,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'rasc-full-stack',
         company: 'RASC - Christian Social Assistance Network',
+        logo: '/images/works/rasc.jpg',
         title: 'Full Stack Developer - Temporary',
         dateRange: 'Jul 2025 - Present',
         location: 'Remote',
@@ -545,8 +590,28 @@ export const siteContent: Record<Locale, SiteContent> = {
         stack: ['Laravel', '.NET', 'AWS', 'Azure']
       },
       {
+        slug: 'decola-sites',
+        company: 'Decola Sites',
+        logo: '/images/works/decola_sites.jpg',
+        title: 'Full Stack Web Developer',
+        dateRange: 'Oct 2024 - Present',
+        location: 'Remote',
+        summary:
+          'Development of responsive, secure, and high-performance websites and web applications for clients across different industries, supporting each project from architecture through deployment and maintenance.',
+        bullets: [
+          'Full stack development with WordPress, PHP, TypeScript, React, and RPG',
+          'Development and integration of APIs, internal systems, and third-party services',
+          'Data modeling and integration with MySQL, PostgreSQL, and SQLite',
+          'Application of artificial intelligence and automation to digital processes and experiences',
+          'Technical SEO, accessibility, Core Web Vitals, and cross-device compatibility optimization',
+          'Version control, delivery automation, monitoring, and continuous project maintenance'
+        ],
+        stack: ['WordPress', 'PHP', 'TypeScript', 'React', 'RPG', 'MySQL', 'PostgreSQL', 'SQLite', 'AI']
+      },
+      {
         slug: 'mega-bilheteria',
         company: 'Mega Bilheteria',
+        logo: '/images/works/mega-bilheteria.png',
         title: 'Full Stack Developer - Contractor',
         dateRange: 'Oct 2025 - Present',
         location: 'Remote',
@@ -556,6 +621,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'home-office',
         company: 'Independent projects',
+        logo: '/images/works/projetos-demanda.png',
         title: 'Full Stack Developer',
         dateRange: 'Jun 2017 - Present',
         location: 'Bauru, Brazil - Remote',
@@ -563,8 +629,26 @@ export const siteContent: Record<Locale, SiteContent> = {
         stack: ['Flutter', 'Laravel', 'CodeIgniter', 'C#', 'ASP.NET Core', 'Blazor']
       },
       {
+        slug: 'soulclinic-full-stack',
+        company: 'Soulclinic',
+        logo: '/images/works/soulclinic.png',
+        title: 'PHP Full Stack Developer',
+        dateRange: 'Jan 2023 - Jul 2026',
+        location: 'Home office · Remote',
+        summary:
+          'Development and evolution of healthcare platforms, including payment integrations, specialized services, and electronic invoice issuance.',
+        bullets: [
+          'Built and maintained PHP applications with CodeIgniter and Laravel',
+          'Developed RESTful APIs and integrations with healthcare ecosystem tools',
+          'Integrated payment gateways and automated electronic invoice issuance',
+          'Configured and evolved CI/CD pipelines with GitHub Actions'
+        ],
+        stack: ['PHP', 'CodeIgniter', 'Laravel', 'REST APIs', 'GitHub Actions', 'Payments']
+      },
+      {
         slug: 'sos-suporte',
         company: 'SOS Soluções em TI',
+        logo: '/images/works/sossystem.png',
         title: 'Support Analyst',
         dateRange: 'Sep 2015 - Jun 2019',
         location: 'Bauru region, Brazil',
@@ -575,6 +659,7 @@ export const siteContent: Record<Locale, SiteContent> = {
       {
         slug: 'ostecnologic',
         company: 'Ostecnologic Soluções em Informática',
+        logo: '/images/works/ostecnologic.png',
         title: 'Support Analyst',
         dateRange: 'Aug 2011 - Aug 2015',
         location: 'Bauru, Brazil',

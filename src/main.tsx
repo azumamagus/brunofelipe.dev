@@ -64,8 +64,6 @@ const navLabelKeys: Record<NavKey, keyof (typeof siteContent)['en']['ui']['nav']
   contact: 'contact'
 };
 
-const preferredLocaleKey = 'brunofelipe.dev:preferred-locale';
-
 const technologyIcons = {
   sharp: SiSharp,
   dotnet: SiDotnet,
@@ -127,21 +125,6 @@ function useRouter() {
   }, []);
 
   useEffect(() => {
-    if (window.location.pathname !== '/') return;
-    const stored = window.localStorage.getItem(preferredLocaleKey);
-    const detected: Locale = stored === 'pt-BR' || stored === 'en'
-      ? stored
-      : navigator.languages.some((language) => language.toLowerCase().startsWith('pt'))
-        ? 'pt-BR'
-        : 'en';
-    window.localStorage.setItem(preferredLocaleKey, detected);
-    if (detected === 'pt-BR') {
-      window.history.replaceState({}, '', '/pt-br');
-      setPathname('/pt-br');
-    }
-  }, []);
-
-  useEffect(() => {
     const content = siteContent[locale];
     const key = navKeyFromRoute(route);
     document.documentElement.lang = locale;
@@ -159,7 +142,6 @@ function useRouter() {
   }
 
   function changeLocale(nextLocale: Locale) {
-    window.localStorage.setItem(preferredLocaleKey, nextLocale);
     navigate(localizedPath(nextLocale, route));
   }
 
@@ -571,8 +553,13 @@ function WorkCard({
 }) {
   return (
     <RouteLink href={work.slug} navigate={navigate} className="content-card work-card">
-      <div className="company-mark" aria-hidden="true">
-        {work.company.split(' ').map((word) => word[0]).slice(0, 2).join('')}
+      <div
+        className={`company-mark${work.logo ? ' has-logo' : ''}${work.logo?.endsWith('/soulclinic.png') ? ' logo-symbol' : ''}`}
+        aria-hidden="true"
+      >
+        {work.logo
+          ? <img src={work.logo} alt="" />
+          : work.company.split(' ').map((word) => word[0]).slice(0, 2).join('')}
       </div>
       <span className="card-kicker">{work.dateRange}</span>
       <h3>{work.company}</h3>
@@ -940,6 +927,11 @@ function WorkDetail({
         <RouteLink href={localizedPath(locale, '/works')} navigate={navigate} className="back-link">
           ← {ui.labels.backWorks}
         </RouteLink>
+        {work.logo ? (
+          <div className={`detail-company-logo${work.logo.endsWith('/soulclinic.png') ? ' logo-symbol' : ''}`}>
+            <img src={work.logo} alt={`${work.company} logo`} />
+          </div>
+        ) : null}
         <p className="detail-kicker">{work.location}</p>
         <p>{work.summary}</p>
         {work.bullets?.length ? <ul>{work.bullets.map((item) => <li key={item}>{item}</li>)}</ul> : null}
