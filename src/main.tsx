@@ -12,12 +12,14 @@ import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
   SiBlazor,
+  SiCredly,
   SiDocker,
   SiDotnet,
   SiFlutter,
   SiGithubactions,
   SiGitlab,
   SiGrafana,
+  SiHackthebox,
   SiKalilinux,
   SiLaravel,
   SiMetasploit,
@@ -25,10 +27,12 @@ import {
   SiOpentelemetry,
   SiOwasp,
   SiPython,
+  SiPortswigger,
   SiReact,
   SiSentry,
   SiSharp,
   SiTeamcity,
+  SiTryhackme,
   SiVuedotjs
 } from 'react-icons/si';
 import { TbShieldCode } from 'react-icons/tb';
@@ -85,6 +89,13 @@ const technologyIcons = {
   kali: SiKalilinux,
   owasp: SiOwasp,
   ptes: TbShieldCode
+} as const;
+
+const securityProfileIcons = {
+  hackthebox: SiHackthebox,
+  tryhackme: SiTryhackme,
+  portswigger: SiPortswigger,
+  credly: SiCredly
 } as const;
 
 function cleanPath(value: string) {
@@ -590,6 +601,29 @@ function ContributionCard({
   );
 }
 
+function SecurityProfileCard({
+  item,
+  linkLabel
+}: {
+  item: (typeof siteContent)['en']['securityProfiles'][number];
+  linkLabel: string;
+}) {
+  const Icon = securityProfileIcons[item.icon];
+  return (
+    <a className={`content-card security-profile-card ${item.icon}`} href={item.href} target="_blank" rel="noreferrer">
+      <div className="security-profile-head">
+        <span className="security-platform-icon" aria-hidden="true"><Icon /></span>
+        <span>{item.status}</span>
+      </div>
+      <p className="security-handle">{item.handle}</p>
+      <h3>{item.platform}</h3>
+      <p>{item.description}</p>
+      <div className="tags">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+      <span className="card-link">{linkLabel} <Arrow /></span>
+    </a>
+  );
+}
+
 function ArticleCard({
   article,
   comingSoon
@@ -615,7 +649,7 @@ function ArticleCard({
 }
 
 function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) => void }) {
-  const { profile, projects, works, contributions, articles, ui } = siteContent[locale];
+  const { profile, projects, works, contributions, securityProfiles, articles, ui } = siteContent[locale];
   return (
     <>
       <section className="home-intro">
@@ -632,6 +666,19 @@ function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) =
           {' '}{ui.home.or}{' '}
           <a href={profile.links[1].href} target="_blank" rel="noreferrer">{profile.links[1].label}</a>.
         </p>
+      </section>
+
+      <section
+        className="commit-history"
+        aria-label={locale === 'en' ? 'GitHub commit history' : 'Histórico de commits no GitHub'}
+      >
+        <a href="https://commit-history.com/azumamagus" target="_blank" rel="noreferrer">
+          <img
+            src="https://commit-history.com/embed/azumamagus?theme=dark"
+            alt={locale === 'en' ? "azumamagus's GitHub commit history" : 'Histórico de commits de azumamagus no GitHub'}
+            loading="lazy"
+          />
+        </a>
       </section>
 
       <section className="status-board">
@@ -670,6 +717,15 @@ function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) =
         <div className="card-grid two">
           {contributions.slice(0, 2).map((item) => (
             <ContributionCard key={item.title} item={item} publicLabel={ui.labels.publicLab} />
+          ))}
+        </div>
+      </section>
+
+      <section className="home-section">
+        <SectionTitle title={ui.labels.securityLabs} />
+        <div className="card-grid two security-profile-grid">
+          {securityProfiles.map((item) => (
+            <SecurityProfileCard key={item.platform} item={item} linkLabel={ui.labels.viewSecurityProfile} />
           ))}
         </div>
       </section>
@@ -772,11 +828,20 @@ function Projects({ locale, navigate }: { locale: Locale; navigate: (path: strin
 }
 
 function OpenSource({ locale }: { locale: Locale }) {
-  const { contributions, ui } = siteContent[locale];
+  const { contributions, securityProfiles, ui } = siteContent[locale];
   return (
     <>
       <PageIntro title={ui.pages.openSource.title} description={ui.pages.openSource.description} />
       <section className="home-section page-list">
+        <SectionTitle title={ui.labels.securityLabs} />
+        <div className="card-grid two security-profile-grid">
+          {securityProfiles.map((item) => (
+            <SecurityProfileCard key={item.platform} item={item} linkLabel={ui.labels.viewSecurityProfile} />
+          ))}
+        </div>
+      </section>
+      <section className="home-section">
+        <SectionTitle title={ui.labels.openSourceLabs} />
         <div className="card-grid two">
           {contributions.map((item) => (
             <ContributionCard key={item.title} item={item} publicLabel={ui.labels.publicLab} />

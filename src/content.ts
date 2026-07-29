@@ -49,6 +49,15 @@ type SiteContent = {
     description: string;
     tags: string[];
   }[];
+  securityProfiles: {
+    platform: string;
+    handle: string;
+    description: string;
+    href: string;
+    icon: 'hackthebox' | 'tryhackme' | 'portswigger' | 'credly';
+    status: string;
+    tags: string[];
+  }[];
   articles: {
     slug: string;
     date: string;
@@ -78,6 +87,7 @@ type SiteContent = {
       featuredProjects: string;
       viewProjects: string;
       openSourceLabs: string;
+      securityLabs: string;
       viewContributions: string;
       experience: string;
       viewExperience: string;
@@ -92,6 +102,7 @@ type SiteContent = {
       backProjects: string;
       backWorks: string;
       publicLab: string;
+      viewSecurityProfile: string;
       downloadResume: string;
       language: string;
       sendEmail: string;
@@ -139,6 +150,7 @@ type SiteContent = {
 const sharedLinks = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/brunodcfelipe/' },
   { label: 'GitHub', href: 'https://github.com/brunodcfelipe' },
+  { label: 'Commit History', href: 'https://commit-history.com/azumamagus' },
   { label: 'E-mail', href: 'mailto:contato@brunofelipe.dev' }
 ];
 
@@ -376,6 +388,48 @@ export const siteContent: Record<Locale, SiteContent> = {
         tags: ['C#', 'Godot', 'Game Design']
       }
     ],
+    securityProfiles: [
+      {
+        platform: 'Hack The Box',
+        handle: '@4zum4',
+        description:
+          'Perfil público dedicado à evolução em pentest, laboratórios práticos, máquinas, desafios e competências verificáveis.',
+        href: 'https://profile.hackthebox.com/profile/019faf44-6f7d-737b-9f44-7e528431d3f7',
+        icon: 'hackthebox',
+        status: 'PERFIL PÚBLICO',
+        tags: ['Pentest', 'Labs', 'CTF', 'Cybersecurity']
+      },
+      {
+        platform: 'TryHackMe',
+        handle: '@azumamagus',
+        description:
+          'Trilhas e laboratórios guiados para consolidar fundamentos de segurança ofensiva, redes e aplicações web.',
+        href: 'https://tryhackme.com/p/azumamagus',
+        icon: 'tryhackme',
+        status: 'LEARNING PATH',
+        tags: ['Learning Paths', 'Rooms', 'Web Security']
+      },
+      {
+        platform: 'PortSwigger Academy',
+        handle: 'Web Security Academy',
+        description:
+          'Estudos práticos de segurança web com Burp Suite, vulnerabilidades em aplicações, APIs, autenticação e lógica de negócio.',
+        href: 'https://portswigger.net/web-security',
+        icon: 'portswigger',
+        status: 'TRILHA EM ANDAMENTO',
+        tags: ['Burp Suite', 'OWASP', 'Web Pentest', 'API Security']
+      },
+      {
+        platform: 'Credly',
+        handle: 'Bruno Felipe',
+        description:
+          'Perfil público para centralizar badges digitais, certificações e competências profissionais verificáveis por organizações emissoras.',
+        href: 'https://www.credly.com/users/bruno-felipe.79c96959',
+        icon: 'credly',
+        status: 'CREDENCIAIS VERIFICÁVEIS',
+        tags: ['Digital Badges', 'Certificações', 'Professional Development']
+      }
+    ],
     articles: [
       {
         slug: 'seguranca-aplicacoes-legadas',
@@ -421,6 +475,7 @@ export const siteContent: Record<Locale, SiteContent> = {
         featuredProjects: 'Projetos em destaque',
         viewProjects: 'Ver todos os projetos',
         openSourceLabs: 'Open Source & Labs',
+        securityLabs: 'Security Labs & Proof of Work',
         viewContributions: 'Ver contribuições',
         experience: 'Experiência',
         viewExperience: 'Ver trajetória completa',
@@ -435,6 +490,7 @@ export const siteContent: Record<Locale, SiteContent> = {
         backProjects: 'Voltar para projetos',
         backWorks: 'Voltar para experiência',
         publicLab: 'PUBLIC / LAB',
+        viewSecurityProfile: 'Ver perfil ou plataforma',
         downloadResume: 'Baixar currículo',
         language: 'Selecionar idioma',
         sendEmail: 'Preparar e-mail'
@@ -711,6 +767,48 @@ export const siteContent: Record<Locale, SiteContent> = {
         tags: ['C#', 'Godot', 'Game Design']
       }
     ],
+    securityProfiles: [
+      {
+        platform: 'Hack The Box',
+        handle: '@4zum4',
+        description:
+          'Public profile focused on hands-on pentesting, labs, machines, challenges, and verifiable cybersecurity skills.',
+        href: 'https://profile.hackthebox.com/profile/019faf44-6f7d-737b-9f44-7e528431d3f7',
+        icon: 'hackthebox',
+        status: 'PUBLIC PROFILE',
+        tags: ['Pentest', 'Labs', 'CTF', 'Cybersecurity']
+      },
+      {
+        platform: 'TryHackMe',
+        handle: '@azumamagus',
+        description:
+          'Guided learning paths and labs for strengthening offensive security, networking, and web application fundamentals.',
+        href: 'https://tryhackme.com/p/azumamagus',
+        icon: 'tryhackme',
+        status: 'LEARNING PATH',
+        tags: ['Learning Paths', 'Rooms', 'Web Security']
+      },
+      {
+        platform: 'PortSwigger Academy',
+        handle: 'Web Security Academy',
+        description:
+          'Hands-on web security studies covering Burp Suite, application and API vulnerabilities, authentication, and business logic.',
+        href: 'https://portswigger.net/web-security',
+        icon: 'portswigger',
+        status: 'IN PROGRESS',
+        tags: ['Burp Suite', 'OWASP', 'Web Pentest', 'API Security']
+      },
+      {
+        platform: 'Credly',
+        handle: 'Bruno Felipe',
+        description:
+          'Public profile for verified digital badges, certifications, and professional competencies issued by trusted organizations.',
+        href: 'https://www.credly.com/users/bruno-felipe.79c96959',
+        icon: 'credly',
+        status: 'VERIFIED CREDENTIALS',
+        tags: ['Digital Badges', 'Certifications', 'Professional Development']
+      }
+    ],
     articles: [
       {
         slug: 'seguranca-aplicacoes-legadas',
@@ -756,6 +854,7 @@ export const siteContent: Record<Locale, SiteContent> = {
         featuredProjects: 'Featured Projects',
         viewProjects: 'View all projects',
         openSourceLabs: 'Open Source & Labs',
+        securityLabs: 'Security Labs & Proof of Work',
         viewContributions: 'View contributions',
         experience: 'Experience',
         viewExperience: 'View full career',
@@ -770,6 +869,7 @@ export const siteContent: Record<Locale, SiteContent> = {
         backProjects: 'Back to projects',
         backWorks: 'Back to experience',
         publicLab: 'PUBLIC / LAB',
+        viewSecurityProfile: 'View profile or platform',
         downloadResume: 'Download resume',
         language: 'Select language',
         sendEmail: 'Prepare e-mail'
