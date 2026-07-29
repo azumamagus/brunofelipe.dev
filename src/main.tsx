@@ -695,7 +695,7 @@ function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) =
           actionPath={localizedPath(locale, '/projects')}
           navigate={navigate}
         />
-        <div className="card-grid three">
+        <div className="card-grid two">
           {projects.filter((item) => item.featured).map((project) => (
             <ProjectCard
               key={project.slug}
@@ -938,6 +938,17 @@ function Contact({ locale }: { locale: Locale }) {
             <span className="card-kicker">LinkedIn</span>
             <a href={profile.links[0].href} target="_blank" rel="noreferrer">brunodcfelipe</a>
             <p>{copy.linkedinDescription}</p>
+          </article>
+          <article className="content-card small-card">
+            <span className="card-kicker">Instagram</span>
+            <a
+              href="https://www.instagram.com/brunofelipe.dev/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              @brunofelipe.dev
+            </a>
+            <p>{copy.instagramDescription}</p>
           </article>
           <article className="content-card small-card">
             <span className="card-kicker">{locale === 'en' ? 'Location' : 'Localização'}</span>

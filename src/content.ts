@@ -138,6 +138,7 @@ type SiteContent = {
         alternatives: string;
         emailDescription: string;
         linkedinDescription: string;
+        instagramDescription: string;
         locationDescription: string;
       };
     };
@@ -151,6 +152,7 @@ const sharedLinks = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/brunodcfelipe/' },
   { label: 'GitHub', href: 'https://github.com/brunodcfelipe' },
   { label: 'Commit History', href: 'https://commit-history.com/azumamagus' },
+  { label: 'Instagram', href: 'https://www.instagram.com/brunofelipe.dev/' },
   { label: 'E-mail', href: 'mailto:contato@brunofelipe.dev' }
 ];
 
@@ -541,6 +543,8 @@ export const siteContent: Record<Locale, SiteContent> = {
           alternatives: 'Outros canais',
           emailDescription: 'Envie uma mensagem direta e responderei assim que possível.',
           linkedinDescription: 'Perfil profissional, histórico e conexão.',
+          instagramDescription:
+            'Conteúdo sobre desenvolvimento, cybersecurity, projetos e bastidores da rotina profissional.',
           locationDescription: 'Disponível para colaboração remota.'
         }
       },
@@ -920,6 +924,8 @@ export const siteContent: Record<Locale, SiteContent> = {
           alternatives: 'Other channels',
           emailDescription: 'Send a direct message and I will reply as soon as possible.',
           linkedinDescription: 'Professional profile, career history, and networking.',
+          instagramDescription:
+            'Content about software development, cybersecurity, projects, and professional behind-the-scenes.',
           locationDescription: 'Available for remote collaboration.'
         }
       },
