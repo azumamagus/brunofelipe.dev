@@ -40,10 +40,12 @@ import { VscAzure } from 'react-icons/vsc';
 import {
   siteContent,
   technologyGroups,
+  type Contribution,
   type Locale,
   type Project,
   type Work
 } from './content';
+import { MarkdownContent } from './MarkdownContent';
 import './styles.css';
 
 type NavKey = 'home' | 'about' | 'projects' | 'open-source' | 'works' | 'articles' | 'contact';
@@ -119,6 +121,7 @@ function localizedPath(locale: Locale, route: string) {
 
 function navKeyFromRoute(route: string): NavKey {
   if (route.startsWith('/projects')) return 'projects';
+  if (route.startsWith('/open-source')) return 'open-source';
   if (route.startsWith('/works')) return 'works';
   if (route.startsWith('/articles')) return 'articles';
   return navItems.find((item) => item.path === route)?.key ?? 'home';
@@ -583,21 +586,38 @@ function WorkCard({
 
 function ContributionCard({
   item,
-  publicLabel
+  publicLabel,
+  detailLabel,
+  locale,
+  navigate
 }: {
-  item: (typeof siteContent)['en']['contributions'][number];
+  item: Contribution;
   publicLabel: string;
+  detailLabel: string;
+  locale: Locale;
+  navigate: (path: string) => void;
 }) {
   return (
-    <article className="content-card contribution-card">
-      <div className="repo-line">
-        <span className="repo-icon" aria-hidden="true">&lt;/&gt;</span>
-        <span>{publicLabel}</span>
+    <RouteLink
+      href={localizedPath(locale, `/open-source/${item.slug}`)}
+      navigate={navigate}
+      className="content-card contribution-card"
+    >
+      <div className="contribution-card-head">
+        <div className="repo-line">
+          <span className="repo-icon" aria-hidden="true">&lt;/&gt;</span>
+          <span>{item.repository}</span>
+        </div>
+        <span className="contribution-period">{item.period}</span>
       </div>
       <h3>{item.title}</h3>
       <p>{item.description}</p>
       <div className="tags">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-    </article>
+      <div className="contribution-card-footer">
+        <span className="card-link">{detailLabel} <Arrow /></span>
+        <span className="contribution-kind">{publicLabel}</span>
+      </div>
+    </RouteLink>
   );
 }
 
@@ -716,7 +736,14 @@ function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) =
         />
         <div className="card-grid two">
           {contributions.slice(0, 2).map((item) => (
-            <ContributionCard key={item.title} item={item} publicLabel={ui.labels.publicLab} />
+            <ContributionCard
+              key={item.slug}
+              item={item}
+              publicLabel={ui.labels.publicLab}
+              detailLabel={ui.labels.readContribution}
+              locale={locale}
+              navigate={navigate}
+            />
           ))}
         </div>
       </section>
@@ -827,7 +854,7 @@ function Projects({ locale, navigate }: { locale: Locale; navigate: (path: strin
   );
 }
 
-function OpenSource({ locale }: { locale: Locale }) {
+function OpenSource({ locale, navigate }: { locale: Locale; navigate: (path: string) => void }) {
   const { contributions, securityProfiles, ui } = siteContent[locale];
   return (
     <>
@@ -842,9 +869,16 @@ function OpenSource({ locale }: { locale: Locale }) {
       </section>
       <section className="home-section">
         <SectionTitle title={ui.labels.openSourceLabs} />
-        <div className="card-grid two">
+        <div className="card-grid three">
           {contributions.map((item) => (
-            <ContributionCard key={item.title} item={item} publicLabel={ui.labels.publicLab} />
+            <ContributionCard
+              key={item.slug}
+              item={item}
+              publicLabel={ui.labels.publicLab}
+              detailLabel={ui.labels.readContribution}
+              locale={locale}
+              navigate={navigate}
+            />
           ))}
         </div>
       </section>
@@ -986,6 +1020,68 @@ function ProjectDetail({
   );
 }
 
+function ContributionDetail({
+  contribution,
+  locale,
+  navigate
+}: {
+  contribution: Contribution;
+  locale: Locale;
+  navigate: (path: string) => void;
+}) {
+  const ui = siteContent[locale].ui;
+  return (
+    <>
+      <PageIntro title={contribution.title} description={contribution.description} />
+      <article className="detail-page contribution-detail">
+        <RouteLink href={localizedPath(locale, '/open-source')} navigate={navigate} className="back-link">
+          ← {ui.labels.backContributions}
+        </RouteLink>
+
+        <div className="contribution-detail-meta">
+          <p className="detail-kicker">{contribution.repository}</p>
+          <span>{contribution.period}</span>
+        </div>
+
+        {contribution.repositoryUrl || contribution.evidence?.length ? (
+          <div className="contribution-actions">
+            {contribution.repositoryUrl ? (
+              <a className="primary-button" href={contribution.repositoryUrl} target="_blank" rel="noreferrer">
+                {ui.labels.openRepository} <span aria-hidden="true">↗</span>
+              </a>
+            ) : null}
+            {contribution.evidence?.map((item) => (
+              <a className="secondary-button" href={item.url} target="_blank" rel="noreferrer" key={item.url}>
+                {item.label} <span aria-hidden="true">↗</span>
+              </a>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="tags contribution-detail-tags">
+          {contribution.tags.map((tag) => <span key={tag}>{tag}</span>)}
+        </div>
+
+        {contribution.content ? (
+          <MarkdownContent content={contribution.content} />
+        ) : (
+          <div className="contribution-post">
+            {contribution.sections.map((section) => (
+              <section key={section.title}>
+                <h2>{section.title}</h2>
+                {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                {section.bullets?.length ? (
+                  <ul>{section.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>
+                ) : null}
+              </section>
+            ))}
+          </div>
+        )}
+      </article>
+    </>
+  );
+}
+
 function WorkDetail({
   work,
   locale,
@@ -1043,6 +1139,13 @@ function PageRouter({
     const project = content.projects.find((item) => item.slug === slug);
     return project ? <ProjectDetail project={project} locale={locale} navigate={navigate} /> : <NotFound locale={locale} navigate={navigate} />;
   }
+  if (route.startsWith('/open-source/')) {
+    const slug = route.replace('/open-source/', '');
+    const contribution = content.contributions.find((item) => item.slug === slug);
+    return contribution
+      ? <ContributionDetail contribution={contribution} locale={locale} navigate={navigate} />
+      : <NotFound locale={locale} navigate={navigate} />;
+  }
   if (route.startsWith('/works/')) {
     const slug = route.replace('/works/', '');
     const work = content.works.find((item) => item.slug === slug);
@@ -1052,7 +1155,7 @@ function PageRouter({
     case '/': return <Home locale={locale} navigate={navigate} />;
     case '/about': return <About locale={locale} />;
     case '/projects': return <Projects locale={locale} navigate={navigate} />;
-    case '/open-source': return <OpenSource locale={locale} />;
+    case '/open-source': return <OpenSource locale={locale} navigate={navigate} />;
     case '/works': return <Works locale={locale} navigate={navigate} />;
     case '/articles': return <Articles locale={locale} />;
     case '/contact': return <Contact locale={locale} />;

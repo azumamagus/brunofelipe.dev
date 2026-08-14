@@ -1,3 +1,5 @@
+import getCnpjPtBrMarkdown from './content/open-source/pt-BR/getcnpj-php.md?raw';
+
 export type Locale = 'en' | 'pt-BR';
 
 export type Project = {
@@ -22,6 +24,23 @@ export type Work = {
   stack: string[];
 };
 
+export type Contribution = {
+  slug: string;
+  title: string;
+  repository: string;
+  repositoryUrl?: string;
+  description: string;
+  period: string;
+  tags: string[];
+  evidence?: { label: string; url: string }[];
+  content?: string;
+  sections: {
+    title: string;
+    paragraphs?: string[];
+    bullets?: string[];
+  }[];
+};
+
 type SiteContent = {
   profile: {
     name: string;
@@ -44,11 +63,7 @@ type SiteContent = {
     period: string;
     description: string;
   }[];
-  contributions: {
-    title: string;
-    description: string;
-    tags: string[];
-  }[];
+  contributions: Contribution[];
   securityProfiles: {
     platform: string;
     handle: string;
@@ -101,7 +116,10 @@ type SiteContent = {
       trajectory: string;
       backProjects: string;
       backWorks: string;
+      backContributions: string;
       publicLab: string;
+      readContribution: string;
+      openRepository: string;
       viewSecurityProfile: string;
       downloadResume: string;
       language: string;
@@ -375,19 +393,121 @@ export const siteContent: Record<Locale, SiteContent> = {
     ],
     contributions: [
       {
+        slug: 'getcnpj-php',
+        title: 'GetCNPJ para PHP',
+        repository: 'azumamagus/GetCNPJ-php',
+        repositoryUrl: 'https://github.com/azumamagus/GetCNPJ-php',
+        description:
+          'Biblioteca open source para consultas resilientes de CNPJ, com validação local, resposta padronizada, fallback entre quatro provedores e integrações com Laravel e CodeIgniter 4.',
+        period: '14 ago 2026',
+        tags: ['PHP', 'Laravel', 'CodeIgniter 4', 'PSR-18', 'Packagist', 'Open Source'],
+        evidence: [
+          { label: 'Pacote no Packagist', url: 'https://packagist.org/packages/azumamagus/get-cnpj' },
+          { label: 'Versão .NET no NuGet', url: 'https://www.nuget.org/packages/GetCNPJ' }
+        ],
+        content: getCnpjPtBrMarkdown,
+        sections: []
+      },
+      {
+        slug: 'brunofelipe-dev',
         title: 'brunofelipe.dev',
-        description: 'Código e infraestrutura deste portfólio, criado para ser simples de manter e fácil de evoluir.',
-        tags: ['React', 'Cloudflare', 'Terraform']
+        repository: 'azumamagus/brunofelipe.dev',
+        repositoryUrl: 'https://github.com/azumamagus/brunofelipe.dev',
+        description:
+          'Código, experiência bilíngue e infraestrutura deste portfólio profissional, desenvolvido para ser rápido, seguro e simples de evoluir.',
+        period: '2026 — atual',
+        tags: ['React', 'TypeScript', 'Cloudflare', 'Terraform', 'GitHub Actions'],
+        evidence: [
+          { label: 'Site em produção', url: 'https://brunofelipe.dev' }
+        ],
+        sections: [
+          {
+            title: 'Sobre o projeto',
+            paragraphs: [
+              'O brunofelipe.dev centraliza minha trajetória profissional, projetos, experiências, estudos de cybersecurity e formas de contato em uma experiência bilíngue.',
+              'O projeto foi construído como um produto real: conteúdo separado da apresentação, rotas próprias, identidade visual consistente e uma base preparada para receber novas publicações.'
+            ]
+          },
+          {
+            title: 'Arquitetura e entrega',
+            bullets: [
+              'Interface estática e responsiva construída com Vite, React e TypeScript',
+              'Publicação na borda da Cloudflare com configuração de domínio e cabeçalhos de segurança',
+              'Infraestrutura versionada com Terraform e entregas automatizadas por GitHub Actions',
+              'Conteúdo em inglês e português com URLs localizadas e currículos para download'
+            ]
+          },
+          {
+            title: 'Decisões de produto',
+            paragraphs: [
+              'A navegação foi mantida direta e previsível, enquanto a identidade visual combina desenvolvimento profissional, segurança ofensiva e game development sem comprometer legibilidade ou acessibilidade.',
+              'Componentes e dados foram organizados para que novos projetos, experiências e artigos possam ser incluídos sem reconstruir a interface.'
+            ]
+          }
+        ]
       },
       {
+        slug: 'security-notes',
         title: 'Security Notes',
-        description: 'Espaço em preparação para checklists, anotações de laboratório e write-ups de segurança web.',
-        tags: ['OWASP', 'Pentest', 'Learning in public']
+        repository: 'Security Notes / Learning Lab',
+        description: 'Coleção em evolução de checklists, anotações de laboratório e estudos de segurança ofensiva para aplicações web e APIs.',
+        period: 'Em construção',
+        tags: ['OWASP', 'Pentest', 'Web Security', 'Learning in public'],
+        sections: [
+          {
+            title: 'Objetivo',
+            paragraphs: [
+              'Este laboratório organiza conhecimento adquirido em ambientes autorizados de estudo, transformando exercícios práticos em referências que possam ser consultadas e aprimoradas ao longo do tempo.',
+              'A proposta é registrar metodologia, raciocínio e medidas de correção, não apenas o resultado de cada exercício.'
+            ]
+          },
+          {
+            title: 'Conteúdo planejado',
+            bullets: [
+              'Checklists de reconhecimento, enumeração e análise de aplicações web',
+              'Notas sobre autenticação, autorização, APIs e lógica de negócio',
+              'Laboratórios realizados no Hack The Box, TryHackMe e PortSwigger Web Security Academy',
+              'Recomendações de mitigação e referências para desenvolvimento seguro'
+            ]
+          },
+          {
+            title: 'Princípios',
+            paragraphs: [
+              'Todo conteúdo é produzido a partir de ambientes próprios ou explicitamente autorizados. Informações sensíveis, credenciais e detalhes que possam expor sistemas reais não fazem parte das publicações.'
+            ]
+          }
+        ]
       },
       {
+        slug: 'game-dev-experiments',
         title: 'Game Dev Experiments',
         description: 'Pequenos protótipos e ferramentas criadas durante estudos de desenvolvimento de jogos.',
-        tags: ['C#', 'Godot', 'Game Design']
+        repository: 'Game Development Lab',
+        period: 'Em evolução',
+        tags: ['C#', 'Godot', 'Game Design', 'Prototyping'],
+        sections: [
+          {
+            title: 'O laboratório',
+            paragraphs: [
+              'Game development é meu espaço de experimentação criativa. Os protótipos servem para estudar sistemas interativos, arquitetura orientada a componentes e a relação entre código, regras e experiência do jogador.'
+            ]
+          },
+          {
+            title: 'Áreas de estudo',
+            bullets: [
+              'Mecânicas e prototipação rápida com C# e Godot',
+              'Máquinas de estado, eventos, inventários e sistemas de progressão',
+              'Ferramentas de apoio para criação e balanceamento de conteúdo',
+              'Narrativa, construção de mundos e game design inspirados por RPG de mesa'
+            ]
+          },
+          {
+            title: 'Próximos passos',
+            paragraphs: [
+              'Os experimentos serão publicados gradualmente com demonstrações, decisões técnicas e retrospectivas sobre o que funcionou em cada protótipo.'
+            ]
+          }
+        ]
       }
     ],
     securityProfiles: [
@@ -491,7 +611,10 @@ export const siteContent: Record<Locale, SiteContent> = {
         trajectory: 'Trajetória profissional',
         backProjects: 'Voltar para projetos',
         backWorks: 'Voltar para experiência',
+        backContributions: 'Voltar para Open Source',
         publicLab: 'PUBLIC / LAB',
+        readContribution: 'Ler detalhes',
+        openRepository: 'Abrir repositório',
         viewSecurityProfile: 'Ver perfil ou plataforma',
         downloadResume: 'Baixar currículo',
         language: 'Selecionar idioma',
@@ -756,19 +879,159 @@ export const siteContent: Record<Locale, SiteContent> = {
     ],
     contributions: [
       {
+        slug: 'getcnpj-php',
+        title: 'GetCNPJ for PHP',
+        repository: 'azumamagus/GetCNPJ-php',
+        repositoryUrl: 'https://github.com/azumamagus/GetCNPJ-php',
+        description:
+          'An open-source library for resilient Brazilian company registry lookups, with local validation, normalized responses, four-provider fallback, and Laravel and CodeIgniter 4 integrations.',
+        period: 'Aug 14, 2026',
+        tags: ['PHP', 'Laravel', 'CodeIgniter 4', 'PSR-18', 'Packagist', 'Open Source'],
+        evidence: [
+          { label: 'Package on Packagist', url: 'https://packagist.org/packages/azumamagus/get-cnpj' },
+          { label: '.NET package on NuGet', url: 'https://www.nuget.org/packages/GetCNPJ' }
+        ],
+        sections: [
+          {
+            title: 'Why this library exists',
+            paragraphs: [
+              'Company registry providers expose different contracts, field names, rate limits, and failure behavior. GetCNPJ isolates those differences behind a single typed API for plain PHP, Laravel, and CodeIgniter 4.',
+              'The client validates CNPJ check digits locally before accessing the network and returns a consistent result regardless of which provider completed the lookup.'
+            ]
+          },
+          {
+            title: 'Resilient provider fallback',
+            bullets: [
+              'Adapters for CNPJ.WS, ReceitaWS, BrasilAPI, and CNPJA',
+              'Priority-based fallback when a provider is unavailable or returns an invalid response',
+              'Provider-specific errors retained for diagnostics and observability',
+              'Per-provider sliding-window rate limiting to reduce accidental throttling'
+            ]
+          },
+          {
+            title: 'Framework-independent architecture',
+            paragraphs: [
+              'Small contracts separate provider access, orchestration, and rate limiting. The HTTP layer follows PSR-18, while framework integrations only manage configuration and client lifecycle.',
+              'Laravel supports package discovery, dependency injection, a facade, and publishable configuration. CodeIgniter 4 integrates through Service Discovery and shared services.'
+            ]
+          },
+          {
+            title: 'Quality and distribution',
+            bullets: [
+              'PHPUnit coverage for validation, provider mapping, fallback, serialization, and framework integrations',
+              'Continuous integration across PHP 8.1 through 8.4',
+              'Composer distribution through Packagist under the MIT license',
+              'Semantic versioning and automated package discovery from Git tags'
+            ]
+          },
+          {
+            title: 'Full technical article',
+            paragraphs: [
+              'The complete article, including installation examples, typed response models, advanced configuration, code samples, and the architecture diagram, is currently available on the Portuguese version of this page.'
+            ]
+          }
+        ]
+      },
+      {
+        slug: 'brunofelipe-dev',
         title: 'brunofelipe.dev',
-        description: 'The code and infrastructure behind this portfolio, designed to be easy to maintain and evolve.',
-        tags: ['React', 'Cloudflare', 'Terraform']
+        repository: 'azumamagus/brunofelipe.dev',
+        repositoryUrl: 'https://github.com/azumamagus/brunofelipe.dev',
+        description:
+          'The code, bilingual experience, and infrastructure behind this professional portfolio, designed to be fast, secure, and easy to evolve.',
+        period: '2026 — present',
+        tags: ['React', 'TypeScript', 'Cloudflare', 'Terraform', 'GitHub Actions'],
+        evidence: [
+          { label: 'Live website', url: 'https://brunofelipe.dev' }
+        ],
+        sections: [
+          {
+            title: 'About the project',
+            paragraphs: [
+              'brunofelipe.dev brings together my professional journey, projects, experience, cybersecurity studies, and contact channels in a bilingual experience.',
+              'The portfolio was built as a real product: content separated from presentation, dedicated routes, a consistent visual identity, and a foundation ready for new publications.'
+            ]
+          },
+          {
+            title: 'Architecture and delivery',
+            bullets: [
+              'Responsive static interface built with Vite, React, and TypeScript',
+              'Edge delivery through Cloudflare with custom-domain and security-header configuration',
+              'Versioned infrastructure with Terraform and delivery automation through GitHub Actions',
+              'English and Portuguese content with localized URLs and downloadable resumes'
+            ]
+          },
+          {
+            title: 'Product decisions',
+            paragraphs: [
+              'Navigation remains direct and predictable, while the visual identity combines professional software development, offensive security, and game development without sacrificing readability or accessibility.',
+              'Components and content are organized so new projects, work experiences, and articles can be added without rebuilding the interface.'
+            ]
+          }
+        ]
       },
       {
+        slug: 'security-notes',
         title: 'Security Notes',
-        description: 'A growing space for checklists, lab notes, and web security write-ups.',
-        tags: ['OWASP', 'Pentest', 'Learning in public']
+        repository: 'Security Notes / Learning Lab',
+        description: 'An evolving collection of checklists, lab notes, and offensive security studies focused on web applications and APIs.',
+        period: 'In progress',
+        tags: ['OWASP', 'Pentest', 'Web Security', 'Learning in public'],
+        sections: [
+          {
+            title: 'Purpose',
+            paragraphs: [
+              'This lab organizes knowledge acquired in authorized learning environments, turning hands-on exercises into references that can be revisited and improved over time.',
+              'The goal is to document methodology, reasoning, and remediation—not only the result of each exercise.'
+            ]
+          },
+          {
+            title: 'Planned content',
+            bullets: [
+              'Reconnaissance, enumeration, and web application analysis checklists',
+              'Notes on authentication, authorization, APIs, and business logic',
+              'Labs completed on Hack The Box, TryHackMe, and PortSwigger Web Security Academy',
+              'Mitigation guidance and secure-development references'
+            ]
+          },
+          {
+            title: 'Principles',
+            paragraphs: [
+              'All content is based on owned or explicitly authorized environments. Sensitive information, credentials, and details that could expose real systems are excluded from every publication.'
+            ]
+          }
+        ]
       },
       {
+        slug: 'game-dev-experiments',
         title: 'Game Dev Experiments',
         description: 'Small prototypes and tools created while studying game development.',
-        tags: ['C#', 'Godot', 'Game Design']
+        repository: 'Game Development Lab',
+        period: 'Evolving',
+        tags: ['C#', 'Godot', 'Game Design', 'Prototyping'],
+        sections: [
+          {
+            title: 'The lab',
+            paragraphs: [
+              'Game development is my space for creative experimentation. These prototypes help me study interactive systems, component-oriented architecture, and the relationship between code, rules, and player experience.'
+            ]
+          },
+          {
+            title: 'Areas of study',
+            bullets: [
+              'Mechanics and rapid prototyping with C# and Godot',
+              'State machines, events, inventories, and progression systems',
+              'Supporting tools for content creation and balancing',
+              'Narrative, worldbuilding, and game design inspired by tabletop RPGs'
+            ]
+          },
+          {
+            title: 'Next steps',
+            paragraphs: [
+              'Experiments will be published gradually with demos, technical decisions, and retrospectives on what worked in each prototype.'
+            ]
+          }
+        ]
       }
     ],
     securityProfiles: [
@@ -872,7 +1135,10 @@ export const siteContent: Record<Locale, SiteContent> = {
         trajectory: 'Professional journey',
         backProjects: 'Back to projects',
         backWorks: 'Back to experience',
+        backContributions: 'Back to Open Source',
         publicLab: 'PUBLIC / LAB',
+        readContribution: 'Read details',
+        openRepository: 'Open repository',
         viewSecurityProfile: 'View profile or platform',
         downloadResume: 'Download resume',
         language: 'Select language',
