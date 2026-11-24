@@ -285,7 +285,7 @@ RESUMES = {
 
 def section(title: str, styles: dict[str, ParagraphStyle]):
     return [
-        Spacer(1, 3 * mm),
+        Spacer(1, 4.2 * mm),
         Paragraph(title, styles["section"]),
         Spacer(1, 1.1 * mm),
         HRFlowable(width="100%", thickness=0.7, color=RULE, spaceAfter=2.8 * mm),
@@ -344,7 +344,7 @@ def skills_table(rows, styles):
             [Paragraph(label, styles["skill_label"]), Paragraph(value, styles["skill"])]
             for label, value in rows
         ],
-        colWidths=[44 * mm, 130 * mm],
+        colWidths=[41 * mm, 133 * mm],
     )
     table.setStyle(
         TableStyle(
@@ -352,6 +352,7 @@ def skills_table(rows, styles):
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (1, 0), (1, -1), 2 * mm),
                 ("TOPPADDING", (0, 0), (-1, -1), 0.6 * mm),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0.6 * mm),
                 ("LINEBELOW", (0, 0), (-1, -2), 0.3, RULE),
@@ -437,6 +438,7 @@ def build_styles():
             leading=14,
             textColor=ACCENT,
             alignment=TA_LEFT,
+            spaceBefore=0,
             spaceAfter=0,
         ),
         "body": ParagraphStyle(
@@ -453,18 +455,21 @@ def build_styles():
             "ResumeSkill",
             parent=sample["BodyText"],
             fontName="Times-Roman",
-            fontSize=9.1,
-            leading=11.7,
+            fontSize=8.8,
+            leading=11.4,
             textColor=BODY,
-            spaceAfter=1.1 * mm,
+            spaceBefore=0,
+            spaceAfter=0,
         ),
         "skill_label": ParagraphStyle(
             "ResumeSkillLabel",
             parent=sample["BodyText"],
             fontName="Times-Bold",
-            fontSize=9.1,
-            leading=11.7,
+            fontSize=8.8,
+            leading=11.4,
             textColor=INK,
+            spaceBefore=0,
+            spaceAfter=0,
         ),
         "date": ParagraphStyle(
             "ResumeDate",
