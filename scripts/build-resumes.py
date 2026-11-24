@@ -15,7 +15,10 @@ from reportlab.platypus import (
     PageTemplate,
     Paragraph,
     Spacer,
+    Table,
+    TableStyle,
 )
+from reportlab.lib.enums import TA_RIGHT
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -290,23 +293,72 @@ def section(title: str, styles: dict[str, ParagraphStyle]):
 
 
 def job_story(job: dict, copy: dict, styles: dict[str, ParagraphStyle]):
-    blocks = [
-        Paragraph(job["date"], styles["date"]),
-        Paragraph(job["company"], styles["company"]),
-        Paragraph(job["role"], styles["role"]),
-        Spacer(1, 1.1 * mm),
-    ]
+    period, _, place = job["date"].partition(" | ")
+    header = two_columns(
+        [
+            [Paragraph(job["company"], styles["company"])],
+            [Paragraph(job["role"], styles["role"])],
+        ],
+        [
+            [Paragraph(period, styles["date"])],
+            [Paragraph(place, styles["place"])],
+        ],
+    )
+    blocks = [header, Spacer(1, 1.2 * mm)]
     for bullet in job["bullets"]:
-        blocks.append(Paragraph(f"•&nbsp;&nbsp;{bullet}", styles["bullet"]))
-    blocks.append(Spacer(1, 0.9 * mm))
+        blocks.append(Paragraph(bullet, styles["bullet"], bulletText="•"))
+    blocks.append(Spacer(1, 0.6 * mm))
     blocks.append(
         Paragraph(
-            f"<b>{copy['technology_label']}:</b> {job['tech']}",
+            f"<font name='Times-Bold' color='#273444'>{copy['technology_label']}:</font> {job['tech']}",
             styles["tech"],
         )
     )
-    blocks.append(Spacer(1, 2.35 * mm))
+    blocks.append(Spacer(1, 3.4 * mm))
     return KeepTogether(blocks)
+
+
+def two_columns(left_rows, right_rows, left_width=None, right_width=None):
+    """Tabela de 2 colunas sem bordas; cada coluna é uma lista de linhas (flowables)."""
+    table = Table(
+        [[left_rows, right_rows]],
+        colWidths=[left_width or 118 * mm, right_width or 56 * mm],
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
+    return table
+
+
+def skills_table(rows, styles):
+    table = Table(
+        [
+            [Paragraph(label, styles["skill_label"]), Paragraph(value, styles["skill"])]
+            for label, value in rows
+        ],
+        colWidths=[44 * mm, 130 * mm],
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0.6 * mm),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0.6 * mm),
+                ("LINEBELOW", (0, 0), (-1, -2), 0.3, RULE),
+            ]
+        )
+    )
+    return table
 
 
 class ResumeDocTemplate(BaseDocTemplate):
@@ -406,52 +458,89 @@ def build_styles():
             textColor=BODY,
             spaceAfter=1.1 * mm,
         ),
+        "skill_label": ParagraphStyle(
+            "ResumeSkillLabel",
+            parent=sample["BodyText"],
+            fontName="Times-Bold",
+            fontSize=9.1,
+            leading=11.7,
+            textColor=INK,
+        ),
         "date": ParagraphStyle(
             "ResumeDate",
             parent=sample["BodyText"],
             fontName="Times-Bold",
             fontSize=9.2,
-            leading=11,
+            leading=12,
             textColor=ACCENT,
-            spaceAfter=0.7 * mm,
+            alignment=TA_RIGHT,
+        ),
+        "place": ParagraphStyle(
+            "ResumePlace",
+            parent=sample["BodyText"],
+            fontName="Times-Italic",
+            fontSize=8.8,
+            leading=11.4,
+            textColor=MUTED,
+            alignment=TA_RIGHT,
         ),
         "company": ParagraphStyle(
             "ResumeCompany",
             parent=sample["BodyText"],
             fontName="Times-Bold",
-            fontSize=10.5,
-            leading=12,
+            fontSize=10.8,
+            leading=12.6,
             textColor=INK,
-            spaceAfter=0.2 * mm,
         ),
         "role": ParagraphStyle(
             "ResumeRole",
             parent=sample["BodyText"],
-            fontName="Times-Bold",
-            fontSize=10.2,
-            leading=12,
-            textColor=INK,
-            spaceAfter=0,
+            fontName="Times-Italic",
+            fontSize=9.8,
+            leading=11.6,
+            textColor=ACCENT,
         ),
         "bullet": ParagraphStyle(
             "ResumeBullet",
             parent=sample["BodyText"],
             fontName="Times-Roman",
-            fontSize=8.9,
-            leading=11.2,
+            fontSize=9,
+            leading=11.4,
             textColor=BODY,
-            leftIndent=3 * mm,
-            firstLineIndent=-3 * mm,
-            spaceAfter=0.9 * mm,
+            leftIndent=4 * mm,
+            bulletIndent=0.8 * mm,
+            bulletFontName="Times-Bold",
+            bulletColor=ACCENT,
+            spaceAfter=0.8 * mm,
         ),
         "tech": ParagraphStyle(
             "ResumeTech",
             parent=sample["BodyText"],
-            fontName="Times-Roman",
+            fontName="Times-Italic",
             fontSize=8.7,
             leading=11,
-            textColor=BODY,
+            textColor=MUTED,
+            leftIndent=4 * mm,
             spaceAfter=0,
+        ),
+        "edu_title": ParagraphStyle(
+            "ResumeEduTitle",
+            parent=sample["BodyText"],
+            fontName="Times-Bold",
+            fontSize=9.6,
+            leading=11.8,
+            textColor=INK,
+            spaceBefore=0,
+            spaceAfter=0.4 * mm,
+        ),
+        "edu_period": ParagraphStyle(
+            "ResumeEduPeriod",
+            parent=sample["BodyText"],
+            fontName="Times-Bold",
+            fontSize=9.2,
+            leading=11.8,
+            textColor=ACCENT,
+            alignment=TA_RIGHT,
         ),
         "education": ParagraphStyle(
             "ResumeEducation",
@@ -460,9 +549,8 @@ def build_styles():
             fontSize=9,
             leading=11.6,
             textColor=BODY,
-            leftIndent=3 * mm,
-            firstLineIndent=-3 * mm,
-            spaceAfter=1 * mm,
+            spaceBefore=0,
+            spaceAfter=0,
         ),
     }
 
@@ -490,8 +578,7 @@ def build_resume(locale: str, copy: dict):
     story.append(Paragraph(copy["summary"], styles["body"]))
 
     story.extend(section(copy["skills_title"], styles))
-    for label, value in copy["skills"]:
-        story.append(Paragraph(f"<b>{label}:</b><br/>{value}", styles["skill"]))
+    story.append(skills_table(copy["skills"], styles))
 
     story.extend(section(copy["experience_title"], styles))
     for job in copy["jobs"]:
@@ -500,9 +587,19 @@ def build_resume(locale: str, copy: dict):
     story.extend(section(copy["education_title"], styles))
     for period, institution, course, description in copy["education"]:
         story.append(
-            Paragraph(
-                f"•&nbsp;&nbsp;<b>{period}</b> - <b>{institution}</b><br/>{course}. {description}",
-                styles["education"],
+            KeepTogether(
+                [
+                    two_columns(
+                        [
+                            [Paragraph(institution, styles["edu_title"])],
+                            [Paragraph(f"{course}. {description}", styles["education"])],
+                        ],
+                        [[Paragraph(period, styles["edu_period"])]],
+                        left_width=138 * mm,
+                        right_width=36 * mm,
+                    ),
+                    Spacer(1, 2 * mm),
+                ]
             )
         )
 
