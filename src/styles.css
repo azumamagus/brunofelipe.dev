@@ -9,7 +9,7 @@
   --line-bright: #555e2d;
   --text: #f2f3ed;
   --text-secondary: #b4b7aa;
-  --text-muted: #777c6c;
+  --text-muted: #9a9f8e;
   --mint: #dff000;
   --mint-hover: #efff54;
   --lavender: #b7bf76;
@@ -724,11 +724,18 @@ main {
   transition: border-color .2s ease, transform .2s ease;
 }
 
+.commit-history a {
+  background: var(--surface);
+}
+
 .commit-history img {
   display: block;
   width: 100%;
   height: auto;
   border-radius: 8px;
+  /* recolor the dark-blue/green embed to the site's lime accent and blend its background into the card */
+  filter: grayscale(1) sepia(1) hue-rotate(35deg) saturate(2.4) brightness(.95) contrast(1.05);
+  mix-blend-mode: screen;
 }
 
 @media (hover: hover) {
@@ -741,7 +748,7 @@ main {
 .status-board {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  margin-bottom: 110px;
+  margin-bottom: 80px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -788,7 +795,7 @@ main {
 }
 
 .home-section {
-  margin-bottom: 120px;
+  margin-bottom: 88px;
 }
 
 .page-list {
@@ -862,7 +869,7 @@ a.content-card:hover {
 .project-visual,
 .article-visual {
   position: relative;
-  aspect-ratio: 16 / 8.8;
+  aspect-ratio: 16 / 7;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
   background:
@@ -1068,9 +1075,45 @@ a.content-card:hover {
   flex: 1;
 }
 
+.work-grid-compact .work-card {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 20px;
+  align-content: start;
+}
+
+.work-grid-compact .company-mark {
+  grid-row: 1 / span 5;
+  margin-bottom: 0;
+}
+
+.work-grid-compact .work-card > :not(.company-mark) {
+  grid-column: 2;
+}
+
+.work-grid-compact .work-card p {
+  margin-bottom: 18px;
+}
+
+@media (max-width: 500px) {
+  .work-grid-compact .work-card {
+    grid-template-columns: 1fr;
+  }
+
+  .work-grid-compact .company-mark {
+    grid-row: auto;
+    margin-bottom: 18px;
+  }
+
+  .work-grid-compact .work-card > :not(.company-mark) {
+    grid-column: 1;
+  }
+}
+
 .security-profile-card {
-  min-height: 340px;
-  padding: 28px;
+  min-height: 0;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   color: var(--text);
@@ -1118,7 +1161,7 @@ a.content-card:hover {
 }
 
 .security-profile-card .security-handle {
-  margin-top: 24px;
+  margin-top: 16px;
   color: var(--mint);
   font: 500 11px/1 var(--mono);
 }
@@ -1128,7 +1171,7 @@ a.content-card:hover {
 }
 
 .contribution-card {
-  min-height: 360px;
+  min-height: 300px;
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -2211,7 +2254,7 @@ a.content-card:hover {
   }
 
   .home-section {
-    margin-bottom: 90px;
+    margin-bottom: 64px;
   }
 
   .card-grid.two,

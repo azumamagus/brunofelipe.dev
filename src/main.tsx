@@ -655,11 +655,11 @@ function ArticleCard({
     <article className="content-card article-card">
       <div className="article-visual" aria-hidden="true">
         <span>FIELD_NOTE</span>
-        <strong>{article.slug.split('-').slice(0, 2).join('_')}</strong>
+        <strong>{article.date}</strong>
         <i />
       </div>
       <div className="card-body">
-        <div className="article-meta"><span>{article.date}</span><span>·</span><span>{article.readingTime}</span></div>
+        <div className="article-meta"><span>{article.readingTime}</span></div>
         <h3>{article.title}</h3>
         <p>{article.description}</p>
         <span className="card-link muted">{comingSoon}</span>
@@ -715,7 +715,7 @@ function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) =
           actionPath={localizedPath(locale, '/projects')}
           navigate={navigate}
         />
-        <div className="card-grid two">
+        <div className="card-grid three">
           {projects.filter((item) => item.featured).map((project) => (
             <ProjectCard
               key={project.slug}
@@ -764,8 +764,8 @@ function Home({ locale, navigate }: { locale: Locale; navigate: (path: string) =
           actionPath={localizedPath(locale, '/works')}
           navigate={navigate}
         />
-        <div className="card-grid three">
-          {works.slice(0, 3).map((work) => (
+        <div className="card-grid two work-grid-compact">
+          {works.slice(0, 4).map((work) => (
             <WorkCard
               key={work.slug}
               work={{ ...work, slug: localizedPath(locale, `/works/${work.slug}`) }}
