@@ -477,14 +477,11 @@ def build_resume(locale: str, copy: dict):
         Paragraph(copy["headline"], styles["headline"]),
         Paragraph(
             (
-                f'<font color="#C2410C">●</font> {copy["location"]}'
-                f' &nbsp; | &nbsp; <a color="#1D4ED8" href="https://brunofelipe.dev">brunofelipe.dev</a>'
-                f' &nbsp; | &nbsp; <a color="#1D4ED8" href="mailto:contato@brunofelipe.dev">contato@brunofelipe.dev</a>'
+                f'<font color="#C2410C">●</font>&nbsp;{copy["location"].replace(" ", "&nbsp;")}'
+                f'&nbsp;&nbsp;|&nbsp;&nbsp;<a color="#1D4ED8" href="https://brunofelipe.dev">brunofelipe.dev</a>'
+                f'&nbsp;&nbsp;|&nbsp;&nbsp;<a color="#1D4ED8" href="mailto:contato@brunofelipe.dev">contato@brunofelipe.dev</a>'
+                f'&nbsp;&nbsp;|&nbsp;&nbsp;<a color="#1D4ED8" href="https://www.linkedin.com/in/brunodcfelipe/">linkedin.com/in/brunodcfelipe</a>'
             ),
-            styles["contact"],
-        ),
-        Paragraph(
-            '<a color="#1D4ED8" href="https://www.linkedin.com/in/brunodcfelipe/">linkedin.com/in/brunodcfelipe</a>',
             styles["contact"],
         ),
     ]
